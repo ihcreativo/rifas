@@ -1,0 +1,53 @@
+{
+  "__commonjsHelpers-725317a4.js": {
+    "file": "assets/_commonjsHelpers-725317a4.js"
+  },
+  "_pdfmake-c4b78dc2.js": {
+    "file": "assets/pdfmake-c4b78dc2.js",
+    "imports": [
+      "__commonjsHelpers-725317a4.js"
+    ],
+    "isDynamicEntry": true
+  },
+  "node_modules/@amcharts/amcharts4/.internal/bundled/xlsx/xlsx.mjs": {
+    "file": "assets/xlsx-80bbcc63.js",
+    "isDynamicEntry": true,
+    "src": "node_modules/@amcharts/amcharts4/.internal/bundled/xlsx/xlsx.mjs"
+  },
+  "node_modules/@amcharts/amcharts4/.internal/canvg/index.js": {
+    "file": "assets/index-9bc3f702.js",
+    "imports": [
+      "__commonjsHelpers-725317a4.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "node_modules/@amcharts/amcharts4/.internal/canvg/index.js"
+  },
+  "node_modules/@amcharts/amcharts4/.internal/pdfmake/vfs_fonts.js": {
+    "file": "assets/vfs_fonts-7b67f08d.js",
+    "isDynamicEntry": true,
+    "src": "node_modules/@amcharts/amcharts4/.internal/pdfmake/vfs_fonts.js"
+  },
+  "resources/js/app.css": {
+    "file": "assets/app-9a69055e.css",
+    "src": "resources/js/app.css"
+  },
+  "resources/js/app.js": {
+    "css": [
+      "assets/app-9a69055e.css"
+    ],
+    "dynamicImports": [
+      "_pdfmake-c4b78dc2.js",
+      "node_modules/@amcharts/amcharts4/.internal/pdfmake/vfs_fonts.js",
+      "node_modules/@amcharts/amcharts4/.internal/canvg/index.js",
+      "node_modules/@amcharts/amcharts4/.internal/bundled/xlsx/xlsx.mjs"
+    ],
+    "file": "assets/app-59a34ec1.js",
+    "isEntry": true,
+    "src": "resources/js/app.js"
+  },
+  "resources/scss/app.scss": {
+    "file": "assets/app-5a65b97b.css",
+    "isEntry": true,
+    "src": "resources/scss/app.scss"
+  }
+}

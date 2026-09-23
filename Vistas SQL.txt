@@ -1,0 +1,6 @@
+
+CREATE view view_cajas as SELECT c.caja, m.tipo, sum(m.movimiento) as valor, m.id_user FROM cajas c INNER JOIN movimiento m ON m.id_caja = c.id
+GROUP by m.id_caja, m.tipo
+
+CREATE view view_opcion AS SELECT o.opcion, o.tipo, sum(m.movimiento) as valor, m.id_user FROM  movimiento_opcion o INNER JOIN movimiento m ON o.id = m.id_opcion
+GROUP by m.id_opcion
