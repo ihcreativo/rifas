@@ -16,8 +16,9 @@ return new class extends Migration
             $table->string('username')->unique();
             $table->string('firts_name');
             $table->string('last_name');
+            $table->string('token')->unique();
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('email_verified_at')->nullable();
             $table->string('password');
             $table->string('img');
             $table->bigInteger('estado')->default(1);
@@ -26,6 +27,13 @@ return new class extends Migration
             $table->unsignedBigInteger('rol_id');
             $table->rememberToken();
             $table->timestamps();
+            $table->unsignedBigInteger('id_user_padre') 
+                ->nullable();
+
+            $table->foreign('id_user_padre')
+                ->references('id')
+                ->on('users')
+                ->onDelete('set null');
             
             $table->foreign("rol_id")
             ->references("id")

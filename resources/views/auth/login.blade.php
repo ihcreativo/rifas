@@ -86,7 +86,7 @@
                     </form>
                 </div>
                 <div class="text-center mt-4 text-dark">
-                    <a href="{{route('usuariosAdd')}}">
+                    <a href="">
                        Deseo registrarme como usuario... !
                     </a>
                 </div>

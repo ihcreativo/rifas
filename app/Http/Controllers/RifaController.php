@@ -8,19 +8,32 @@ use App\Models\RifaNumero;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use App\Models\User;
+use App\Models\RifaImagen;
+use Illuminate\Support\Facades\Storage;
 
 class RifaController extends Controller
 {
 
     public function index(Request $request)
     {
-        $numeros = RifaNumero::where('rifa_id', $request->rifa_id)
+        $query = RifaNumero::where('rifa_id', $request->rifa_id);
+
+        // Si viene vendedor_id, mostrar únicamente
+        // los números asignados a ese vendedor
+        if (isset($request->vendedor_id)) {
+            $query->where('id_vendedor', $request->vendedor_id);
+        }
+
+        $numeros = $query
             ->orderBy('numero', 'asc')
             ->get([
                 'id',
                 'rifa_id',
                 'numero',
                 'estado',
+                'id_vendedor',
             ]);
 
         return response()->json([
@@ -32,9 +45,70 @@ class RifaController extends Controller
     /**
      * Mostrar información de un número.
      */
-    public function show($id)
+    public function show($token)
     {
-        return view('rifa_client', ['id'=> $id]);  
+        $rifa = Rifa::where('token', $token)->firstOrFail();
+
+        return view('rifa_client', ['id'=> $rifa->id, 'token' => $rifa->token]);
+
+        // return view('rifa_client', ['id'=> $id]);  
+    }
+
+    // public function showRifa($tr, $tv)
+    // {
+    //     // Buscar la rifa por su token
+    //     $rifa = Rifa::where('token', $tr)->firstOrFail();
+
+    //     // Buscar el vendedor y verificar que pertenece a esa rifa
+    //     $vendedor = User::where('token', $tv)
+    //         ->where('id_user_padre', $rifa->id_user)
+    //         ->where('rol_id', 2)
+    //         ->firstOrFail();
+
+    //     return view('rifa_client', [
+    //         'id' => $rifa->id,
+    //         'token' => $rifa->token,
+    //         'vendedor' => $vendedor,
+    //         'idV' => $vendedor->id
+    //     ]);
+    // }
+
+    public function showRifa($tr, $tv)
+    {
+        $rifa = Rifa::where('token', $tr)->firstOrFail();
+
+        $vendedor = User::where('token', $tv)
+            ->where('rol_id', 2)
+            ->firstOrFail();
+
+        $numeros = RifaNumero::where('rifa_id', $rifa->id)
+            ->where('id_vendedor', $vendedor->id)
+            ->orderBy('numero')
+            ->get();
+
+        if ($numeros->isEmpty()) {
+            abort(404);
+        }
+
+        $imagenes = $rifa->imagenes()
+            ->orderBy('orden')
+            ->get()
+            ->map(function ($imagen) {
+                return [
+                    'id' => $imagen->id,
+                    'imagen' => asset('storage/' . $imagen->imagen),
+                    'orden' => $imagen->orden,
+                ];
+            });
+
+        return view('rifa_client', [
+            'id' => $rifa->id,
+            'token' => $rifa->token,
+            'vendedor' => $vendedor,
+            'numeros' => $numeros,
+            'idV' => $vendedor->id,
+            'imagenes' => $imagenes,
+        ]);
     }
 
     /**
@@ -153,6 +227,341 @@ class RifaController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'No fue posible realizar la reserva.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function saveRifa(Request $request)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'premio' => 'required|string|max:255',
+            'valor_opcion' => 'required|numeric|min:0',
+            'cantidad_numeros' => 'required|integer|min:1',
+            'fecha_sorteo' => 'required|date',
+            'validacion_sorteo' => 'required|string|max:50',
+        ]);
+
+        try {
+
+            DB::beginTransaction();
+
+            $rifa = Rifa::create([
+                'nombre' => $request->nombre,
+                'id_user' =>auth()->user()->id,
+                'token' => Str::random(10),
+                'descripcion' => $request->descripcion,
+                'premio' => $request->premio,
+                'valor_opcion' => $request->valor_opcion,
+                'cantidad_numeros' => $request->cantidad_numeros,
+                'fecha_sorteo' => $request->fecha_sorteo,
+                'validacion_sorteo' => $request->validacion_sorteo,
+                'participantes' => 1
+            ]);
+
+            /*
+            * Crear los números de la rifa
+            */
+            for ($i = 1; $i <= $request->cantidad_numeros; $i++) {
+
+                RifaNumero::create([
+                    'rifa_id' => $rifa->id,
+                    'numero' => $i,
+                    'estado' => 'disponible',
+                    'id_vendedor' => null,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rifa creada correctamente.',
+                'rifa' => $rifa
+            ], 201);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No fue posible crear la rifa.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getRifasByUser()
+    {
+        $rifas = Rifa::where('id_user', auth()->id())
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'rifas' => $rifas
+        ]);
+    }
+
+    public function repartirNumeros(Request $request)
+    {
+        $request->validate([
+            'id_rifa' => 'required|integer|exists:rifas,id',
+            'vendedores' => 'required|array|min:1',
+            'vendedores.*' => 'required|integer|exists:users,id',
+        ]);
+
+        try {
+
+            DB::beginTransaction();
+
+            // Rifa
+            $rifa = Rifa::findOrFail($request->id_rifa);
+
+            // Vendedores seleccionados
+            $vendedores = User::whereIn('id', $request->vendedores)
+                ->where('rol_id', 2)
+                ->get();
+
+            // Verificar que todos sean vendedores
+            if ($vendedores->count() !== count($request->vendedores)) {
+                throw new \Exception(
+                    'Uno o más usuarios seleccionados no son vendedores válidos.'
+                );
+            }
+
+            // Obtener números de la rifa
+            $numeros = RifaNumero::where('rifa_id', $rifa->id)
+                ->get();
+
+            if ($numeros->isEmpty()) {
+                throw new \Exception(
+                    'La rifa no tiene números para repartir.'
+                );
+            }
+
+             /*
+            |--------------------------------------------------------------------------
+            | ACTUALIZAR CANTIDAD DE PARTICIPANTES
+            |--------------------------------------------------------------------------
+            */
+
+            $rifa->participantes = $vendedores->count();
+            $rifa->save();
+
+            /*
+            |--------------------------------------------------------------------------
+            | MEZCLAR LOS NÚMEROS ALEATORIAMENTE
+            |--------------------------------------------------------------------------
+            */
+
+            $numeros = $numeros->shuffle();
+
+            $cantidadNumeros = $numeros->count();
+            $cantidadVendedores = $vendedores->count();
+
+            /*
+            |--------------------------------------------------------------------------
+            | CALCULAR DISTRIBUCIÓN
+            |--------------------------------------------------------------------------
+            */
+
+            $cantidadBase = intdiv(
+                $cantidadNumeros,
+                $cantidadVendedores
+            );
+
+            $sobrantes = $cantidadNumeros % $cantidadVendedores;
+
+            /*
+            |--------------------------------------------------------------------------
+            | ASIGNAR NÚMEROS
+            |--------------------------------------------------------------------------
+            */
+
+            $indiceNumero = 0;
+
+            foreach ($vendedores as $indiceVendedor => $vendedor) {
+
+                // Cantidad que recibirá este vendedor
+                $cantidadAsignar = $cantidadBase;
+
+                // Los primeros vendedores reciben uno adicional
+                if ($indiceVendedor < $sobrantes) {
+                    $cantidadAsignar++;
+                }
+
+                for ($i = 0; $i < $cantidadAsignar; $i++) {
+
+                    $numero = $numeros[$indiceNumero];
+
+                    $numero->id_vendedor = $vendedor->id;
+
+                    $numero->save();
+
+                    $indiceNumero++;
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Los números fueron repartidos correctamente.',
+                'rifa' => $rifa->id,
+                'total_numeros' => $cantidadNumeros,
+                'total_vendedores' => $cantidadVendedores,
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ], 500);
+        }
+    }
+    public function vendedoresConNumeros($id)
+    {
+        try {
+
+            $rifa = Rifa::findOrFail($id);
+
+            $numeros = RifaNumero::with('vendedor')
+                ->where('rifa_id', $rifa->id)
+                ->whereNotNull('id_vendedor')
+                ->orderBy('id_vendedor')
+                ->orderBy('numero')
+                ->get();
+
+            $vendedores = $numeros
+                ->groupBy('id_vendedor')
+                ->map(function ($numeros) {
+
+                    $vendedor = $numeros->first()->vendedor;
+
+                    return [
+                        'id' => $vendedor->id,
+                        'nombre' => $vendedor->firts_name . ' ' . $vendedor->last_name,
+                        'email' => $vendedor->email,
+                        'token' =>$vendedor->token,
+                        'cantidad_numeros' => $numeros->count(),
+                        'numeros' => $numeros->pluck('numero')->values(),
+                    ];
+                })
+                ->values();
+
+            return response()->json([
+                'success' => true,
+                'rifa' => $rifa,
+                'vendedores' => $vendedores
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    //imagenes
+    public function subirImagenes(Request $request)
+    {
+        $request->validate([
+            'rifa_id' => 'required|integer|exists:rifas,id',
+            'imagenes' => 'required|array|min:1',
+            'imagenes.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
+        ]);
+
+        try {
+            $rifa = Rifa::findOrFail($request->rifa_id);
+            $ordenActual = RifaImagen::where('rifa_id', $rifa->id)->max('orden');
+            $ordenActual = $ordenActual ?? 0;
+            $imagenesGuardadas = [];
+            foreach ($request->file('imagenes') as $imagen) {
+                $ordenActual++;
+                $ruta = $imagen->store('rifas', 'public');
+                $rifaImagen = RifaImagen::create([
+                    'rifa_id' => $rifa->id,
+                    'imagen' => $ruta,
+                    'orden' => $ordenActual,
+                ]);
+                $imagenesGuardadas[] = $rifaImagen;
+            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Las imágenes fueron subidas correctamente.',
+                'imagenes' => $imagenesGuardadas,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No fue posible subir las imágenes.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function imagenes($id)
+    {
+        try {
+            $rifa = Rifa::findOrFail($id);
+            $imagenes = $rifa->imagenes()
+                ->orderBy('orden')
+                ->get()
+                ->map(function ($imagen) {
+                    return [
+                        'id' => $imagen->id,
+                        'imagen' => asset('storage/' . $imagen->imagen),
+                        'orden' => $imagen->orden,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'imagenes' => $imagenes,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function eliminarImagen($id)
+    {
+        try {
+
+            $imagen = RifaImagen::findOrFail($id);
+
+            // Eliminar archivo físico
+            if ($imagen->imagen && Storage::disk('public')->exists($imagen->imagen)) {
+                Storage::disk('public')->delete($imagen->imagen);
+            }
+
+            // Eliminar registro
+            $imagen->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'La imagen fue eliminada correctamente.'
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No fue posible eliminar la imagen.',
                 'error' => $e->getMessage()
             ], 500);
         }

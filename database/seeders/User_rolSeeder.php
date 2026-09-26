@@ -20,7 +20,7 @@ class User_rolSeeder extends Seeder
 
         $rol1 = new User_rol();
         $rol1->nivel =  2;
-        $rol1->rol =  "Administrador";
+        $rol1->rol =  "Vendedor";
         $rol1->save();
 
         $rol2 = new User_rol();

@@ -20,12 +20,13 @@ class User extends Authenticatable
     protected $fillable = [
         'firts_name',
         'last_name',
+        'token',
         'email',
         'username',
         'img',
         'rol_id',
-        'cliente_id',
-        'password'
+        'password',
+        'id_user_padre'
     ];
 
     /**
@@ -57,4 +58,14 @@ class User extends Authenticatable
     public function rol(){
         return $this->belongsTo('App\Models\User_rol', 'rol_id');
     }
-}
+
+    public function padre()
+    {
+        return $this->belongsTo(User::class, 'id_user_padre');
+    }
+
+    public function hijos()
+    {
+        return $this->hasMany(User::class, 'id_user_padre');
+    }
+    }

@@ -8,12 +8,12 @@
         </div>
     </a>
 </li>
-<li class="menu {{ ! Route::is('movimientos') ?: 'active'}}">
-    <a href="{{route('movimientos')}}" aria-expanded="false" class="dropdown-toggle">
+<li class="menu {{ ! Route::is('participantes') ?: 'active'}}">
+    <a href="{{route('participantes')}}" aria-expanded="false" class="dropdown-toggle">
         {{-- {{ ! Route::is('dashboard') ?: 'text-white align-middle'}} --}}
         <div>
-            <i class="fa-solid fa-list-check fs-6 {{ Route::is('movimientos')? 'text-white':'text-dark'}}"></i>
-           <span class="pb-2">Movimientos</span>
+            <i class="fa-solid fa-list-check fs-6 {{ Route::is('participantes')? 'text-white':'text-dark'}}"></i>
+           <span class="pb-2">Participantes</span>
         </div>
     </a>
 </li>

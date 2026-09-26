@@ -14,6 +14,7 @@ class RifaNumero extends Model
     protected $fillable = [
         'rifa_id',
         'numero',
+        'id_vendedor',
         'estado',
         'nombre',
         'whatsapp',
@@ -32,5 +33,10 @@ class RifaNumero extends Model
     public function rifa()
     {
         return $this->belongsTo(Rifa::class);
+    }
+
+    public function vendedor()
+    {
+        return $this->belongsTo(User::class, 'id_vendedor');
     }
 }

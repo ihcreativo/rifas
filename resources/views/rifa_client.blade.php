@@ -34,7 +34,7 @@
 </head>
 <body class="p-0 m-0">
     <div class="container-fluid p-0 m-0" id="app">
-        <rifa_cLient path="{{route('login.index')}}" id="{{$id}}"></rifa_client>
+        <rifa_cLient path="{{route('login.index')}}" id="{{$id}}" token="{{$token}}" idv="{{$idV ?? ''}}"  :vendedor='@json($vendedor ?? null)'  :imagenes='@json($imagenes ?? [])' ></rifa_client>
     </div>
 </body>
 </html>

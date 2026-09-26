@@ -11,6 +11,8 @@ class RifaSeeder extends Seeder
     public function run(): void
     {
         $rifa = Rifa::create([
+            'id_user' => 1,
+            'token' => 'MHi3490LOCRTLIO9',
             'nombre' => 'Rifa Garmin Forerunner 55',
             'descripcion' => 'Rifa de un Garmin Forerunner 55',
             'premio' => 'Garmin Forerunner 55',
@@ -19,12 +21,14 @@ class RifaSeeder extends Seeder
             'fecha_sorteo' => '10/10/2026',
             'validacion_sorteo' => 'Sinuano noche',
             'estado' => 'activa',
+            'participantes' => 1
         ]);
 
         for ($i = 0; $i <= 99; $i++) {
             RifaNumero::create([
                 'rifa_id' => $rifa->id,
                 'numero' => $i,
+                'id_vendedor' => '1',
                 'estado' => 'disponible',
             ]);
         }

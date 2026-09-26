@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\RifaImagen;
 
 class Rifa extends Model
 {
@@ -13,6 +14,8 @@ class Rifa extends Model
 
     protected $fillable = [
         'nombre',
+        'token',
+        'id_user',
         'descripcion',
         'premio',
         'valor_opcion',
@@ -20,6 +23,7 @@ class Rifa extends Model
         'fecha_sorteo',
         'validacion_sorteo',
         'estado',
+        'participantes' //numero de vendedores
     ];
 
     protected $casts = [
@@ -33,5 +37,10 @@ class Rifa extends Model
     public function numeros()
     {
         return $this->hasMany(RifaNumero::class);
+    }
+    public function imagenes()
+    {
+        return $this->hasMany(RifaImagen::class, 'rifa_id')
+            ->orderBy('orden');
     }
 }

@@ -58,9 +58,10 @@ import amchartbarra from './components/amcharts/bar.vue';
 import amchartbarra_vertical from './components/amcharts/bar-vertical.vue';
 import amchartlinea from './components/amcharts/line.vue';
 import amchartpie from './components/amcharts/pie.vue';
-// import asistencia from './components/asistencia.vue';
+// import asistencia from './components/usuarios.vue';
 import rifa_client from './components/rifa_client.vue';
 import asistencia_admin from './components/asistencia_admin.vue';
+import Usuarios from './components/usuarios.vue';
 
 Vue.component('dashboard', dashboard);
 Vue.component('movimientos', movimientos);
@@ -74,6 +75,7 @@ Vue.component('amchart-torta',amchartpie);
 // Vue.component('asistencia_admin', asistencia_admin);
 
 Vue.component('rifa_client', rifa_client);
+Vue.component('usuarios', Usuarios);
 
 // window.Vue = require('vue').default;
 // window.Vue.prototype.$eventBus = new Vue();

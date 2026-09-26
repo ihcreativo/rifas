@@ -5,7 +5,8 @@
     @endsection
     @section('contenido') 
         <div class="container-fluid"> 
-            <movimientos path="{{route('login.index')}}"></movimientos>
+            
+            <usuarios path="{{route('login.index')}}"></usuarios>
         </div>
     @endsection
 @endauth

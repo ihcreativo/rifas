@@ -8,13 +8,72 @@
             <!-- =====================================================
                  BANNER
             ====================================================== -->
+            <div v-if="imagenes.length" class="rifa-galeria mb-4" >
+                <div class="rifa-slider">
+                    <!-- Imagen actual -->
+                    <div class="rifa-imagen-container">
 
-            <img
-                class="p-0 m-0"
-                :src="path + '/img/tech_banner.png'"
-                width="100%"
-                alt=""
-            >
+                        <img
+                            :src="imagenes[imagenActual].imagen"
+                            class="rifa-imagen-principal"
+                            :alt="'Imagen del premio ' + (imagenActual + 1)"
+                        >
+
+                        <!-- Botón anterior -->
+                        <button
+                            v-if="imagenes.length > 1"
+                            type="button"
+                            class="rifa-flecha rifa-flecha-anterior"
+                            @click="imagenAnterior"
+                        >
+                            ‹
+                        </button>
+
+                        <!-- Botón siguiente -->
+                        <button
+                            v-if="imagenes.length > 1"
+                            type="button"
+                            class="rifa-flecha rifa-flecha-siguiente"
+                            @click="imagenSiguiente"
+                        >
+                            ›
+                        </button>
+
+                    </div>
+
+                    <!-- Indicador -->
+                    <!-- <div  v-if="imagenes.length > 1"  class="rifa-indicador">
+                        {{ imagenActual + 1 }} / {{ imagenes.length }}
+                    </div> -->
+
+                    <!-- Miniaturas -->
+                    <!-- <div
+                        v-if="imagenes.length > 1"
+                        class="rifa-miniaturas"
+                    >
+
+                        <div
+                            v-for="(imagen, index) in imagenes"
+                            :key="imagen.id"
+                            class="rifa-miniatura"
+                            :class="{ 'miniatura-activa': imagenActual === index }"
+                            @click="seleccionarImagen(index)"
+                        >
+
+                            <img
+                                :src="imagen.imagen"
+                                :alt="'Miniatura ' + (index + 1)"
+                            >
+
+                        </div>
+
+                    </div> -->
+
+                </div>
+            </div>
+            
+            <!-- fin de banner -->
+
             <div v-if="pantalla=== 'reservar'" class="">
                 <div class="text-center m-2">
                     <h1> NUMEROS SELECCIONADOS</h1>
@@ -40,14 +99,9 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
 
             </div>
             <div v-if="pantalla === 'numeros'">
-
-                
-
-
                 <!-- =====================================================
                     TITULO
                 ====================================================== -->
-
                 <div class="text-center mt-4 mb-4">
 
                     <h3>Selecciona tus números</h3>
@@ -58,183 +112,75 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
 
                 </div>
 
-
                 <!-- =====================================================
                     LEYENDA
                 ====================================================== -->
-
                 <div class="leyenda mb-4">
-
                     <div class="leyenda-item">
-
                         <span class="cuadro disponible"></span>
-
                         <span>Disponible</span>
-
                     </div>
-
-
                     <div class="leyenda-item">
-
                         <span class="cuadro reservado"></span>
-
                         <span>Reservado</span>
-
                     </div>
-
-
                     <div class="leyenda-item">
-
                         <span class="cuadro pagado"></span>
-
                         <span>Pagado</span>
-
                     </div>
-
                 </div>
-
-
                 <!-- =====================================================
                     CARGANDO
                 ====================================================== -->
-
-                <div
-                    v-if="status === state.LOADING"
-                    class="text-center p-5"
-                >
-
-                    <div
-                        class="spinner-border text-primary"
-                        role="status"
-                    ></div>
-
-                    <p class="mt-3">
-                        Cargando números...
-                    </p>
-
+                <div v-if="status === state.LOADING" class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status" ></div>
+                    <p class="mt-3">Cargando números...</p>
                 </div>
-
-
                 <!-- =====================================================
                     NUMEROS
                 ====================================================== -->
-                
-                
                 <div v-if="pantalla === 'numeros'" class="numeros-container">
-
-                    <div
-                        v-for="numero in numeros"
-                        :key="numero.id"
-
-                        class="numero"
-
-                        :class="[
-                            numero.estado,
-                            {
-                                'seleccionado': esta_seleccionado(numero)
-                            }
-                        ]"
-
-                        @click="seleccionar_numero(numero)"
-                    >
-
+                    <div v-for="numero in numeros" :key="numero.id" class="numero" :class="[ numero.estado,{ 'seleccionado': esta_seleccionado(numero) }]"  @click="seleccionar_numero(numero)">
                         <div class="numero-valor">
                             {{ String(numero.numero).padStart(2, '0') }}
                         </div>
-
-
                         <div class="numero-estado">
-
                             {{ texto_estado(numero.estado) }}
-
                         </div>
-
                     </div>
-
                 </div>
             
-
-
                 <!-- =====================================================
                     NUMEROS SELECCIONADOS
                 ====================================================== -->
 
-                <div
-                    v-if="numeros_seleccionados.length > 0"
-                    class="seleccion-container"
-                >
-
+                <div v-if="numeros_seleccionados.length > 0"  class="seleccion-container" >
                     <h5 class="text-center mb-3">
-
                         Números seleccionados
-
                     </h5>
-
-
                     <div class="seleccionados">
-
-                        <span
-                            v-for="numero in numeros_seleccionados"
-                            :key="numero.id"
-
-                            class="numero-seleccionado"
-                        >
-
-                            
+                        <span v-for="numero in numeros_seleccionados"  :key="numero.id" class="numero-seleccionado"  >
                             {{ String(numero.numero).padStart(2, '0') }}
-
                         </span>
-
                     </div>
-
-
                     <!-- =================================================
                         BOTONES
                     ================================================== -->
-
                     <div class="text-center mt-4">
-
-                        <button type="button"  class="btn btn-secondary mr-2"
-                            @click="limpiar_seleccion"
-                            :disabled="reservando"
-                        >
-
+                        <button type="button"  class="btn btn-secondary mr-2" @click="limpiar_seleccion" :disabled="reservando" >
                             Limpiar
-
                         </button>
-
-
-                        <button
-                            type="button"
-
-                            class="btn btn-primary"
-
-                            @click="reservar_numeros"
-
-                            :disabled="reservando"
-                        >
-
+                        <button type="button" class="btn btn-primary" @click="reservar_numeros" :disabled="reservando" >
                             <span v-if="reservando">
-
-                                <span
-                                    class="spinner-border spinner-border-sm mr-1"
-                                ></span>
-
+                                <span class="spinner-border spinner-border-sm mr-1"></span>
                                 Reservando...
-
                             </span>
-
 
                             <span v-else>
-
                                 Reservar números
-
                             </span>
-
                         </button>
-
                     </div>
-
                 </div>
 
                 <!-- =====================================================
@@ -296,40 +242,20 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
 <script>
 
 export default {
-
-    /*
-    |--------------------------------------------------------------------------
-    | PROPS
-    |--------------------------------------------------------------------------
-    */
-
     props: {
-
-        path: {
-            type: String,
-            default: ''
-        },
-
-
-        id: {
-            type: String,
-            default: '0'
-        }
-
+        path: {type: String, default: ''},
+        id: {type: String, default: '0'},
+        token: {type: String, default: '0'},
+        vendedor: {type: Object, default:[]},
+        idv: {type: String, default: '0'},
+        imagenes: {type: Array, default: () => []},
     },
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | DATA
-    |--------------------------------------------------------------------------
-    */
 
     data() {
         return {
             status: 'ini',
+            imagenActual: 0,
             state: {
-
                 'INI': 'ini',
                 'LOADING': 'loading',
                 'LOADED': 'loaded',
@@ -343,31 +269,54 @@ export default {
             reservando: false,
             pantalla : 'numeros',
             nombre_cliente: '',
-            whatsapp_cliente: ''
+            whatsapp_cliente: '',
         }
 
     },
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | METHODS
-    |--------------------------------------------------------------------------
-    */
-
     methods: {
+imagenAnterior: function() {
 
+    if (this.imagenes.length === 0) {
+        return;
+    }
 
-        /*
-        |--------------------------------------------------------------------------
-        | CARGAR NUMEROS
-        |--------------------------------------------------------------------------
-        */
+    if (this.imagenActual === 0) {
+        this.imagenActual = this.imagenes.length - 1;
+    } else {
+        this.imagenActual--;
+    }
+},
+
+imagenSiguiente: function() {
+
+    if (this.imagenes.length === 0) {
+        return;
+    }
+
+    if (this.imagenActual === this.imagenes.length - 1) {
+        this.imagenActual = 0;
+    } else {
+        this.imagenActual++;
+    }
+},
+
+seleccionarImagen: function(index) {
+
+    this.imagenActual = index;
+
+},
 
         cargar_rifas: function(){
+            console.log('ID RIFA:', this.id);
+            console.log('ID VENDEDOR:', this.idv);
+            console.log('TOKEN:', this.token);
+            console.log('token : '+this.token);
             this.status = this.state.LOADING;
             let fields = new FormData();
             fields.append('rifa_id', this.id);
+            fields.append('token', this.token);
+            if(this.idv != 0){fields.append('vendedor_id', this.idv);}
             axios.post(this.path + '/rifa_numeros',fields).then(res => {
                 console.log('Respuesta números:',res.data);
                 if(res.data.success){
@@ -383,68 +332,26 @@ export default {
             });
         },
 
-        /*
-        |--------------------------------------------------------------------------
-        | SELECCIONAR NUMERO
-        |--------------------------------------------------------------------------
-        */
-
         seleccionar_numero: function(numero){
-            /*
-            | Solo permitimos seleccionar
-            | números disponibles.
-            */
-            if(numero.estado !== 'disponible'){
-                return;
-            }
-            /*
-            | Verificamos si ya está seleccionado.
-            */
+            if(numero.estado !== 'disponible'){ return; }
+            /* Verificamos si ya está seleccionado. */
             let existe = this.numeros_seleccionados.find(item => item.id === numero.id);
             if(existe){
-                /*
-                | Si ya estaba seleccionado,
-                | lo quitamos.
-                */
+                /*Si ya estaba seleccionado, lo quitamos. */
                 this.numeros_seleccionados = this.numeros_seleccionados.filter( item => item.id !== numero.id );
             }else{
-                /*
-                | Agregamos el número.
-                */
+                /*Agregamos el número.*/
                 this.numeros_seleccionados.push(numero);
             }
         },
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SABER SI ESTÁ SELECCIONADO
-        |--------------------------------------------------------------------------
-        */
 
         esta_seleccionado: function(numero){
             return this.numeros_seleccionados.some(item => item.id === numero.id);
         },
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | LIMPIAR SELECCION
-        |--------------------------------------------------------------------------
-        */
-
         limpiar_seleccion: function(){
-
             this.numeros_seleccionados = [];
-
         },
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TEXTO DEL ESTADO
-        |--------------------------------------------------------------------------
-        */
 
         texto_estado: function(estado){
             switch(estado){
@@ -454,13 +361,6 @@ export default {
                 default:return estado;
             }
         },
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | RESERVAR NUMEROS
-        |--------------------------------------------------------------------------
-        */
 
         reservar_numeros: function(){
             /*
@@ -624,7 +524,6 @@ export default {
     */
 
     mounted() {
-
         this.cargar_rifas();
 
     }
@@ -635,7 +534,142 @@ export default {
 
 
 <style scoped>
+.rifa-galeria {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
 
+.rifa-imagen-principal {
+    width: 100%;
+    height: 400px;
+    object-fit: contain;
+    background: #f5f5f5;
+    border-radius: 12px;
+}
+@media (max-width: 576px) {
+
+    .rifa-imagen-principal {
+        height: 280px;
+    }
+
+}
+
+.rifa-slider {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.rifa-imagen-container {
+    position: relative;
+    width: 100%;
+    background: #f5f5f5;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.rifa-imagen-principal {
+    display: block;
+    width: 100%;
+    height: 400px;
+    object-fit: contain;
+    background: #f5f5f5;
+}
+
+.rifa-flecha {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+
+    width: 45px;
+    height: 45px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+
+    font-size: 38px;
+    line-height: 35px;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 10;
+}
+
+.rifa-flecha:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.rifa-flecha-anterior {
+    left: 15px;
+}
+
+.rifa-flecha-siguiente {
+    right: 15px;
+}
+
+.rifa-indicador {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.rifa-miniaturas {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.rifa-miniatura {
+    width: 70px;
+    height: 70px;
+
+    border-radius: 8px;
+    overflow: hidden;
+
+    cursor: pointer;
+
+    border: 3px solid transparent;
+}
+
+.rifa-miniatura img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rifa-miniatura.miniatura-activa {
+    border-color: #007bff;
+}
+
+@media (max-width: 576px) {
+
+    .rifa-imagen-principal {
+        height: 280px;
+    }
+
+    .rifa-flecha {
+        width: 38px;
+        height: 38px;
+        font-size: 30px;
+    }
+
+    .rifa-miniatura {
+        width: 55px;
+        height: 55px;
+    }
+
+}
 /*
 |--------------------------------------------------------------------------
 | CONTENEDOR DE NUMEROS

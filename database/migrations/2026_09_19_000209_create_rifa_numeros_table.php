@@ -14,6 +14,8 @@ return new class extends Migration
             $table->foreignId('rifa_id')
                 ->constrained('rifas')
                 ->cascadeOnDelete();
+            
+            $table->unsignedBigInteger('id_vendedor')->nullable();
 
             $table->unsignedTinyInteger('numero');
 
@@ -30,6 +32,11 @@ return new class extends Migration
             $table->dateTime('fecha_reserva')->nullable();
 
             $table->dateTime('fecha_pago')->nullable();
+            
+            $table->foreign("id_vendedor")
+            ->references("id")
+            ->on("users")
+            ->onDelete("cascade");
 
             $table->timestamps();
 
