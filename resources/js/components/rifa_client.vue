@@ -275,43 +275,37 @@ export default {
     },
 
     methods: {
-imagenAnterior: function() {
+        imagenAnterior: function() {
 
-    if (this.imagenes.length === 0) {
-        return;
-    }
+            if (this.imagenes.length === 0) {
+                return;
+            }
 
-    if (this.imagenActual === 0) {
-        this.imagenActual = this.imagenes.length - 1;
-    } else {
-        this.imagenActual--;
-    }
-},
+            if (this.imagenActual === 0) {
+                this.imagenActual = this.imagenes.length - 1;
+            } else {
+                this.imagenActual--;
+            }
+        },
 
-imagenSiguiente: function() {
+        imagenSiguiente: function() {
 
-    if (this.imagenes.length === 0) {
-        return;
-    }
+            if (this.imagenes.length === 0) {
+                return;
+            }
 
-    if (this.imagenActual === this.imagenes.length - 1) {
-        this.imagenActual = 0;
-    } else {
-        this.imagenActual++;
-    }
-},
+            if (this.imagenActual === this.imagenes.length - 1) {
+                this.imagenActual = 0;
+            } else {
+                this.imagenActual++;
+            }
+        },
 
-seleccionarImagen: function(index) {
-
-    this.imagenActual = index;
-
-},
+        seleccionarImagen: function(index) {
+            this.imagenActual = index;
+        },
 
         cargar_rifas: function(){
-            console.log('ID RIFA:', this.id);
-            console.log('ID VENDEDOR:', this.idv);
-            console.log('TOKEN:', this.token);
-            console.log('token : '+this.token);
             this.status = this.state.LOADING;
             let fields = new FormData();
             fields.append('rifa_id', this.id);
@@ -448,41 +442,20 @@ seleccionarImagen: function(index) {
         reservar_numeros_db: function(){
             this.reservando = true;
             let fields = new FormData();
-            /*
-            | ID de la rifa
-            */
-            fields.append(
-                'rifa_id',
-                parseInt(this.id)
-            );
-            /*
-            | Datos del cliente
-            */
-            fields.append(
-                'nombre_cliente',
-                this.nombre_cliente
-            );
-            fields.append(
-                'whatsapp_cliente',
-                this.whatsapp_cliente
-            );
-            /*
-            | Números seleccionados
-            */
+            fields.append('rifa_id',parseInt(this.id));
+            fields.append('nombre_cliente',this.nombre_cliente);
+            fields.append('whatsapp_cliente', this.whatsapp_cliente);
+            
             this.numeros_seleccionados.forEach(numero => {
-                fields.append(
-                    'numeros[]',
-                    numero.id
-                );
+                fields.append('numeros[]', numero.id);
             });
-            /*
-            | Enviar a Laravel
-            */
+            
             axios.post(this.path + '/rifa_reservar',fields).then(res => {
                 console.log('Respuesta reserva:', res.data);
                 if(res.data.success){
-                    this.numeros = res.data.numeros;
+                    //this.numeros = res.data.numeros;
                     this.numeros_seleccionados = [];
+                    this.cargar_rifas();
                     Swal.fire({
                         icon: 'success',
                         title: 'Reserva realizada',
