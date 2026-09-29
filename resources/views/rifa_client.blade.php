@@ -2,6 +2,16 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
+    <meta property="og:title" content="{{ $title }}">
+    <meta property="og:description"
+        content="Participa en nuestra rifa. ¡Reserva tu número!">
+    <meta property="og:image" content="{{ $imagenCompartir }}">
+    <meta property="og:url"
+        content="{{ url()->current() }}">
+
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
     <title> Rifa</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
     <link rel="icon" type="image/x-icon" href="img/favicon.png "/>

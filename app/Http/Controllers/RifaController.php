@@ -54,24 +54,6 @@ class RifaController extends Controller
         // return view('rifa_client', ['id'=> $id]);  
     }
 
-    // public function showRifa($tr, $tv)
-    // {
-    //     // Buscar la rifa por su token
-    //     $rifa = Rifa::where('token', $tr)->firstOrFail();
-
-    //     // Buscar el vendedor y verificar que pertenece a esa rifa
-    //     $vendedor = User::where('token', $tv)
-    //         ->where('id_user_padre', $rifa->id_user)
-    //         ->where('rol_id', 2)
-    //         ->firstOrFail();
-
-    //     return view('rifa_client', [
-    //         'id' => $rifa->id,
-    //         'token' => $rifa->token,
-    //         'vendedor' => $vendedor,
-    //         'idV' => $vendedor->id
-    //     ]);
-    // }
 
     public function showRifa($tr, $tv)
     {
@@ -100,7 +82,7 @@ class RifaController extends Controller
                     'orden' => $imagen->orden,
                 ];
             });
-
+        $imagenCompartir = $imagenes->first()['imagen'] ?? asset('images/rifa-default.jpg');
         return view('rifa_client', [
             'id' => $rifa->id,
             'token' => $rifa->token,
@@ -108,6 +90,8 @@ class RifaController extends Controller
             'numeros' => $numeros,
             'idV' => $vendedor->id,
             'imagenes' => $imagenes,
+            'imagenCompartir' => $imagenCompartir,
+            'title' => $rifa->nombre,
         ]);
     }
 
@@ -175,24 +159,134 @@ class RifaController extends Controller
             DB::commit();
             try {
 
-                Mail::raw(
-                    "NUEVA RESERVA DE RIFA\n\n" .
-                    "Cliente: " . $request->nombre_cliente . "\n" .
-                    "WhatsApp: " . $request->whatsapp_cliente . "\n" .
-                    "Rifa: " . $request->rifa_id . "\n" .
-                    "Números: " .
-                    $numeros->pluck('numero')
-                        ->map(function ($numero) {
-                            return str_pad($numero, 2, '0', STR_PAD_LEFT);
-                        })
-                        ->implode(', ') . "\n" .
-                    "Fecha: " . now()->format('d/m/Y H:i:s'),
+                // Mail::raw(
+                //     "NUEVA RESERVA DE RIFA\n\n" .
+                //     "Cliente: " . $request->nombre_cliente . "\n" .
+                //     "WhatsApp: " . $request->whatsapp_cliente . "\n" .
+                //     "Rifa: " . $request->rifa_id . "\n" .
+                //     "Números: " .
+                //     $numeros->pluck('numero')
+                //         ->map(function ($numero) {
+                //             return str_pad($numero, 2, '0', STR_PAD_LEFT);
+                //         })
+                //         ->implode(', ') . "\n" .
+                //     "Fecha: " . now()->format('d/m/Y H:i:s'),
 
-                    function ($message) {
-                        $message->to('isaiasherazo@gmail.com')
+                //     function ($message) {
+                //         $message->to('isaiasherazo@gmail.com')
+                //                 ->subject('Nueva reserva de rifa');
+                //     }
+                // );
+                // Números reservados
+                $numerosReservados = $numeros->pluck('numero')
+                    ->map(function ($numero) {
+                        return str_pad($numero, 2, '0', STR_PAD_LEFT);
+                    })
+                    ->implode(', ');
+
+                // Obtener vendedor
+                $vendedor = User::find($numeros->first()->id_vendedor);
+
+                if (!$vendedor || !$vendedor->email) {
+                    throw new \Exception('No fue posible encontrar el correo del vendedor.');
+                }
+
+                // Normalizar WhatsApp del cliente
+                $whatsapp = preg_replace('/\D/', '', $request->whatsapp_cliente);
+
+                // Si es un número colombiano de 10 dígitos
+                if (strlen($whatsapp) === 10) {
+                    $whatsapp = '57' . $whatsapp;
+                }
+
+                // Mensaje para WhatsApp
+                $mensajeWhatsapp =
+                    "Hola {$request->nombre_cliente}, 👋\n\n" .
+                    "Hemos recibido tu reserva en la rifa.\n\n" .
+                    "🎟️ Números reservados: {$numerosReservados}\n" .
+                    "💰 Recuerda realizar el pago para confirmar tu participación.\n\n" .
+                    "¡Gracias por participar!";
+
+                $linkWhatsapp = 'https://wa.me/' . $whatsapp . '?text=' . urlencode($mensajeWhatsapp);
+
+
+                // Correo HTML
+                Mail::html(
+                    "
+                    <div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;'>
+
+                        <h2 style='color:#198754;'>
+                            🎟️ Nueva reserva de rifa
+                        </h2>
+
+                        <p><strong>Cliente:</strong> {$request->nombre_cliente}</p>
+
+                        <p>
+                            <strong>WhatsApp:</strong>
+                            {$request->whatsapp_cliente}
+                        </p>
+
+                        <p>
+                            <strong>Rifa:</strong>
+                            {$request->rifa_id}
+                        </p>
+
+                        <p>
+                            <strong>Números reservados:</strong>
+                            {$numerosReservados}
+                        </p>
+
+                        <p>
+                            <strong>Vendedor:</strong>
+                            {$vendedor->firts_name} {$vendedor->last_name}
+                        </p>
+
+                        <p>
+                            <strong>Fecha:</strong>
+                            " . now()->format('d/m/Y H:i:s') . "
+                        </p>
+
+                        <hr>
+
+                        <div style='text-align:center;margin:30px 0;'>
+
+                            <a href='{$linkWhatsapp}'
+                            target='_blank'
+                            style='
+                                display:inline-block;
+                                background:#25D366;
+                                color:#ffffff;
+                                padding:14px 25px;
+                                text-decoration:none;
+                                border-radius:8px;
+                                font-weight:bold;
+                                font-size:16px;
+                            '>
+                                📱 Enviar WhatsApp al cliente
+                            </a>
+
+                        </div>
+
+                        <p style='font-size:13px;color:#777;'>
+                            Haz clic en el botón para abrir WhatsApp con el mensaje
+                            de confirmación preparado.
+                        </p>
+
+                    </div>
+                    ",
+                    function ($message) use ($vendedor) {
+
+                        // Correo principal: vendedor
+                        $message->to($vendedor->email)
+
+                                // Copia: administrador
+                                ->cc('isaiasherazo@gmail.com')
+
                                 ->subject('Nueva reserva de rifa');
                     }
                 );
+
+              
 
             } catch (\Exception $e) {
 

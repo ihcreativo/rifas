@@ -399,11 +399,12 @@
                     </div>
 
                     <div class="row m-3" v-if="vendedoresConNumeros && vendedoresConNumeros.length">
-                        <div v-for="vn in vendedoresConNumeros"  :key="vn.id" class="mb-3 col-4 p-2" >
+                        
+                        <div v-for="vn in vendedoresConNumeros"  :key="vn.id" class="mb-3 col-sm-12 col-md-6 col-lg-4 p-2" >
                             <div class="h5 text-center p-3 card">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <a target="_blank" :href="path+'/r/'+rifaSeleccionada.token+'/'+vn.token">
-                                        <strong>{{ vn.nombre }}</strong>
+                                        <strong>{{ vn.nombre }} isas</strong>
                                     </a>
                                     <span class="badge badge-primary float-right">
                                         {{ vn.cantidad_numeros }}
