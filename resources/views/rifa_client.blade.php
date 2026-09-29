@@ -5,9 +5,10 @@
     <meta property="og:title" content="{{ $title }}">
     <meta property="og:description"
         content="Participa en nuestra rifa. ¡Reserva tu número!">
-    <meta property="og:image" content="{{ $imagenCompartir }}">
-    <meta property="og:url"
-        content="{{ url()->current() }}">
+
+    <meta property="og:image" content="{{ url($imagenes->first()['imagen'] ?? '/images/rifa-default.jpg') }}">
+    {{-- <meta property="og:image" content="{{ $imagenCompartir }}"> --}}
+    <meta property="og:url" content="{{ url()->current() }}">
 
     <meta property="og:type" content="website">
 
