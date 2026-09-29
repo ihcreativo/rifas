@@ -102,20 +102,18 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
                 <!-- =====================================================
                     TITULO
                 ====================================================== -->
-                <div class="text-center mt-4 mb-4">
-
+                <div class="text-center mt-0 mb-4">
                     <h3>Selecciona tus números</h3>
-
-                    <p class="text-muted">
+                    <span class="text-muted">
                         Selecciona los números que deseas reservar.
-                    </p>
+                    </span>
 
                 </div>
 
                 <!-- =====================================================
                     LEYENDA
                 ====================================================== -->
-                <div class="leyenda mb-4">
+                <div class="leyenda mb-2">
                     <div class="leyenda-item">
                         <span class="cuadro disponible"></span>
                         <span>Disponible</span>
@@ -137,6 +135,39 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
                     <p class="mt-3">Cargando números...</p>
                 </div>
                 <!-- =====================================================
+                    NUMEROS SELECCIONADOS
+                ====================================================== -->
+
+                <div  v-if="numeros_seleccionados.length > 0"
+    class="seleccion-container seleccion-sticky" >
+                    <h5 class="text-center mb-2">
+                        Números seleccionados
+                    </h5>
+                    <div class="seleccionados">
+                        <span v-for="numero in numeros_seleccionados"  :key="numero.id" class="numero-seleccionado"  >
+                            {{ String(numero.numero).padStart(2, '0') }}
+                        </span>
+                    </div>
+                    <!-- =================================================
+                        BOTONES
+                    ================================================== -->
+                    <div class="text-center mt-2">
+                        <button type="button" class="btn btn-primary px-4" @click="reservar_numeros" :disabled="reservando" >
+                            <span v-if="reservando">
+                                <span class="spinner-border spinner-border-sm mr-1"></span>
+                                RESERVANDO...
+                            </span>
+
+                            <span v-else>
+                                RESERVAR NUMEROS                            </span>
+                        </button>
+                        <button type="button"  class="btn btn-danger ms-2" @click="limpiar_seleccion" :disabled="reservando" >
+                            CANCELAR
+                        </button>
+                    </div>
+                </div>
+
+                <!-- =====================================================
                     NUMEROS
                 ====================================================== -->
                 <div v-if="pantalla === 'numeros'" class="numeros-container">
@@ -150,38 +181,7 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
                     </div>
                 </div>
             
-                <!-- =====================================================
-                    NUMEROS SELECCIONADOS
-                ====================================================== -->
-
-                <div v-if="numeros_seleccionados.length > 0"  class="seleccion-container" >
-                    <h5 class="text-center mb-3">
-                        Números seleccionados
-                    </h5>
-                    <div class="seleccionados">
-                        <span v-for="numero in numeros_seleccionados"  :key="numero.id" class="numero-seleccionado"  >
-                            {{ String(numero.numero).padStart(2, '0') }}
-                        </span>
-                    </div>
-                    <!-- =================================================
-                        BOTONES
-                    ================================================== -->
-                    <div class="text-center mt-4">
-                        <button type="button"  class="btn btn-secondary mr-2" @click="limpiar_seleccion" :disabled="reservando" >
-                            Limpiar
-                        </button>
-                        <button type="button" class="btn btn-primary" @click="reservar_numeros" :disabled="reservando" >
-                            <span v-if="reservando">
-                                <span class="spinner-border spinner-border-sm mr-1"></span>
-                                Reservando...
-                            </span>
-
-                            <span v-else>
-                                Reservar números
-                            </span>
-                        </button>
-                    </div>
-                </div>
+               
 
                 <!-- =====================================================
                     SIN SELECCION
@@ -374,6 +374,7 @@ export default {
             /*
             | Activamos estado de reserva.
             */
+           
            Swal.fire({
             title: 'Datos para la reserva',
             html: `
@@ -641,6 +642,15 @@ export default {
         width: 55px;
         height: 55px;
     }
+    .seleccion-sticky {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: #ffffff;
+        padding: 12px;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    }
 
 }
 /*
@@ -903,7 +913,7 @@ export default {
 
     flex-wrap: wrap;
 
-    gap: 8px;
+    gap: 5px;
 
 }
 
