@@ -651,6 +651,7 @@
                     if (response.data.success) {
                         let usu = response.data.usuarios;
                         this.vendedores = usu.filter(u =>u.rol_id == 2);
+
                     }
 
                 }) .catch(error => {

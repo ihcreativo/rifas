@@ -417,6 +417,8 @@ export default {
                 username: '',
                 password: '',
                 rol_id: '2',
+                tipo_pago:'',
+                numero_pago:''
             },
             showMenu : 1
 
@@ -469,7 +471,8 @@ export default {
                 last_name: '',
                 email: '',
                 username: '',
-                password: ''
+                password: '',
+
             };
             this.mostrarFormularioUsuario = true;
         },
@@ -487,7 +490,9 @@ export default {
                 last_name: usuario.last_name,
                 email: usuario.email,
                 username: usuario.username,
-                password: ''
+                password: '',
+                tipo_pago:usuario.tipo_pago,
+                numero_pago: usuario.numero_pago,
             };
             this.mostrarFormularioUsuario = true;
         },
