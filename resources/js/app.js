@@ -52,6 +52,7 @@ window.Vue.prototype.$eventBus = new Vue();
 
 
 import dashboard from './components/dashboard-home.vue';
+import dashboard_vendedor from './components/dashboard-vendedor.vue';
 import movimientos from './components/movimientos.vue';
 import setting from './components/setting.vue';
 import amchartbarra from './components/amcharts/bar.vue';
@@ -64,6 +65,7 @@ import asistencia_admin from './components/asistencia_admin.vue';
 import Usuarios from './components/usuarios.vue';
 
 Vue.component('dashboard', dashboard);
+Vue.component('dashboard-vendedor', dashboard_vendedor);
 Vue.component('movimientos', movimientos);
 Vue.component('configuracion', setting);
 Vue.component('amchart-barra', amchartbarra);

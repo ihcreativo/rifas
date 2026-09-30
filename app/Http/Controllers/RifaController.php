@@ -186,25 +186,6 @@ class RifaController extends Controller
             DB::commit();
             try {
 
-                // Mail::raw(
-                //     "NUEVA RESERVA DE RIFA\n\n" .
-                //     "Cliente: " . $request->nombre_cliente . "\n" .
-                //     "WhatsApp: " . $request->whatsapp_cliente . "\n" .
-                //     "Rifa: " . $request->rifa_id . "\n" .
-                //     "Números: " .
-                //     $numeros->pluck('numero')
-                //         ->map(function ($numero) {
-                //             return str_pad($numero, 2, '0', STR_PAD_LEFT);
-                //         })
-                //         ->implode(', ') . "\n" .
-                //     "Fecha: " . now()->format('d/m/Y H:i:s'),
-
-                //     function ($message) {
-                //         $message->to('isaiasherazo@gmail.com')
-                //                 ->subject('Nueva reserva de rifa');
-                //     }
-                // );
-                // Números reservados
                 $numerosReservados = $numeros->pluck('numero')
                     ->map(function ($numero) {
                         return str_pad($numero, 2, '0', STR_PAD_LEFT);
@@ -226,13 +207,28 @@ class RifaController extends Controller
                     $whatsapp = '57' . $whatsapp;
                 }
 
+                ///mensaje
+                "💰 *Datos para realizar el pago:*\n" .
+                "💳 Medio de pago: {$vendedor->tipo_pago}\n" .
+                "📱 Número de pago: {$vendedor->numero_pago}\n\n" .
+
+                "⚠️ Recuerda realizar el pago para confirmar tu participación.\n\n" .
+
+                "Una vez realizado el pago, envía el comprobante por este medio.\n\n" .
+
+                "¡Gracias por participar! 🍀";
+
                 // Mensaje para WhatsApp
                 $mensajeWhatsapp =
                     "Hola {$request->nombre_cliente}, 👋\n\n" .
                     "Hemos recibido tu reserva en la rifa.\n\n" .
                     "🎟️ Números reservados: {$numerosReservados}\n" .
                     "💰 Recuerda realizar el pago para confirmar tu participación.\n\n" .
-                    "¡Gracias por participar!";
+                    "💰 *Datos para realizar el pago:*\n" .
+                    "💳 Medio de pago: {$vendedor->tipo_pago}\n" .
+                    "📱 Número de pago: {$vendedor->numero_pago}\n\n" .
+                    "Una vez realizado el pago, envía el comprobante por este medio.\n\n" .
+                    "¡Gracias por participar! 🍀";
 
                 $linkWhatsapp = 'https://wa.me/' . $whatsapp . '?text=' . urlencode($mensajeWhatsapp);
 
@@ -418,6 +414,62 @@ class RifaController extends Controller
         }
     }
 
+    public function getRifasByVendedor()
+    {
+        $idVendedor = auth()->id();
+
+        $rifas = Rifa::whereHas('numeros', function ($query) use ($idVendedor) {
+                $query->where('id_vendedor', $idVendedor);
+            })
+            ->with([
+                'numeros' => function ($query) use ($idVendedor) {
+                    $query->where('id_vendedor', $idVendedor)
+                        ->orderBy('numero', 'asc');
+                }
+            ])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'rifas' => $rifas
+        ]);
+    }
+    public function cambiarEstadoNumero(Request $request, $id)
+    {
+        $request->validate([
+            'estado' => 'required|in:disponible,reservado,pagado',
+        ]);
+
+        try {
+
+            $numero = RifaNumero::where('id', $id)
+                ->where('id_vendedor', auth()->id())
+                ->firstOrFail();
+
+            $numero->estado = $request->estado;
+            $numero->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'El estado del número fue actualizado correctamente.',
+                'numero' => [
+                    'id' => $numero->id,
+                    'numero' => $numero->numero,
+                    'estado' => $numero->estado,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No fue posible actualizar el estado.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function getRifasByUser()
     {
         $rifas = Rifa::where('id_user', auth()->id())
@@ -577,7 +629,15 @@ class RifaController extends Controller
                         'email' => $vendedor->email,
                         'token' =>$vendedor->token,
                         'cantidad_numeros' => $numeros->count(),
-                        'numeros' => $numeros->pluck('numero')->values(),
+                        // 'numeros' => $numeros->pluck('numero')->values(),
+                        'numeros' => $numeros->map(function ($numero) {
+                        return [
+                            'numero' => $numero->numero,
+                            'estado' => $numero->estado,
+                            'nombre' => $numero->nombre,
+                            'whatsapp' => $numero->whatsapp,
+                        ];
+                    })->values(),
                     ];
                 })
                 ->values();

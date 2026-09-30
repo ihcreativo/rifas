@@ -969,195 +969,29 @@ export default {
     text-transform: uppercase;
 
     margin-top: 4px;
-
 }
-
-
-/*
-|--------------------------------------------------------------------------
-| LEYENDA
-|--------------------------------------------------------------------------
-*/
-
-.leyenda {
-
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
-
-    gap: 25px;
-
-    flex-wrap: wrap;
-
-}
-
-
-.leyenda-item {
-
-    display: flex;
-
-    align-items: center;
-
-    font-size: 14px;
-
-}
-
-
-.cuadro {
-
-    width: 18px;
-
-    height: 18px;
-
-    border-radius: 4px;
-
-    margin-right: 6px;
-
-}
-
-
-.cuadro.disponible {
-
-    background: #28a745;
-
-}
-
-
-.cuadro.reservado {
-
-    background: #ffc107;
-
-}
-
-
-.cuadro.pagado {
-
-    background: #dc3545;
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| SELECCION
-|--------------------------------------------------------------------------
-*/
-
-.seleccion-container {
-
-    max-width: 900px;
-
-    margin: 20px auto;
-
-    padding: 20px;
-
-    background: #f8f9fa;
-
-    border-radius: 10px;
-
-}
-
-
-.seleccionados {
-
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
-
-    flex-wrap: wrap;
-
-    gap: 5px;
-
-}
-
-
-.numero-seleccionado {
-
-    background: #007bff;
-
-    color: white;
-
-    padding: 8px 12px;
-
-    border-radius: 6px;
-
-    font-weight: bold;
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| RESPONSIVE
-|--------------------------------------------------------------------------
-*/
-.terminos-contenido {
-    white-space: normal;
-    line-height: 1.6;
-    font-size: 15px;
-}
-
-.modal {
-    z-index: 1055;
-}
-
-.modal-backdrop {
-    z-index: 1050;
-    
-}
-
+.disponible{background-color: #28a745;}
+.reservado{background-color: #ffc107; color:white;}
+.pagado{background-color: #dc3545;}
+.leyenda { display: flex; justify-content: center; align-items: center; gap: 25px; flex-wrap: wrap;}
+.leyenda-item {display: flex; align-items: center; font-size: 14px;}
+.cuadro {width: 18px;height: 18px;  border-radius: 4px; margin-right: 6px;}
+.cuadro.disponible { background: #28a745;}
+.cuadro.reservado {background: #ffc107;}
+.cuadro.pagado { background: #dc3545;}
+.seleccion-container { max-width: 900px;  margin: 20px auto;  padding: 20px;  background: #f8f9fa;  border-radius: 10px;}
+.seleccionados {display: flex; justify-content: center; align-items: center; flex-wrap: wrap;  gap: 5px;}
+.numero-seleccionado { background: #007bff; color: white; padding: 8px 12px; border-radius: 6px; font-weight: bold;}
+.terminos-contenido {  white-space: normal; line-height: 1.6;  font-size: 15px;}
+.modal { z-index: 1055;}
+.modal-backdrop { z-index: 1050;}
 @media(max-width: 768px){
-
-    .numeros-container {
-
-        grid-template-columns:
-            repeat(5, 1fr);
-
-        padding: 10px;
-
-        gap: 7px;
-
-    }
-
+    .numeros-container { grid-template-columns:repeat(5, 1fr);  padding: 10px; gap: 7px;}
 }
-
-
 @media(max-width: 400px){
-
-    .numeros-container {
-
-        grid-template-columns:
-            repeat(4, 1fr);
-
-        gap: 5px;
-
-    }
-
-
-    .numero {
-
-        min-height: 60px;
-
-    }
-
-
-    .numero-valor {
-
-        font-size: 17px;
-
-    }
-
-
-    .numero-estado {
-
-        font-size: 8px;
-
-    }
-
+    .numeros-container { grid-template-columns: repeat(4, 1fr); gap: 5px;}
+    .numero { min-height: 60px;}
+    .numero-valor { font-size: 17px;}
+    .numero-estado {font-size: 8px;}
 }
-
 </style>

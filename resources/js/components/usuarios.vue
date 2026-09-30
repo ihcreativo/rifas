@@ -89,6 +89,38 @@
                             </div>
                         </div>
 
+
+                        <div class="form-group pt-2">
+                            <label>Tipo de pago</label>
+
+                            <select
+                                v-model="formUsuario.tipo_pago"
+                                class="form-control"
+                            >
+                                <option value="">Seleccione...</option>
+                                <option value="nequi">Nequi</option>
+                                <option value="daviplata">Daviplata</option>
+                                <option value="bancolombia">Bancolombia</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+
+                        <div
+                            v-if="formUsuario.tipo_pago && formUsuario.tipo_pago !== 'efectivo'"
+                            class="form-group py-2"
+                        >
+                            <label>Número de pago</label>
+
+                            <input
+                                type="text"
+                                v-model="formUsuario.numero_pago"
+                                class="form-control"
+                                placeholder="Ej: 3001234567"
+                            >
+                        </div>
+
+
                         <!-- CONTRASEÑA -->
                         <div class="col-md-6">
                             <div class="form-group">
@@ -185,51 +217,53 @@
                             </div>
 
                         </div> -->
+                        <div class="col-6">
+                            <div class="text-right">
+        
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary mr-2"
+                                    @click="cerrarFormulario"
+                                >
+                                    Cancelar
+                                </button>
+        
+        
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary"
+                                    :disabled="guardandoUsuario"
+                                >
+        
+                                    <span v-if="guardandoUsuario">
+        
+                                        <i class="fa fa-spinner fa-spin"></i>
+        
+                                        Guardando...
+        
+                                    </span>
+        
+                                    <span v-else>
+        
+                                        <i class="fa fa-save"></i>
+        
+                                        {{ editandoUsuario
+                                            ? 'Actualizar'
+                                            : 'Guardar'
+                                        }}
+        
+                                    </span>
+        
+                                </button>
+        
+                            </div>
+                        </div>
 
                     </div>
 
 
                     <!-- BOTONES -->
 
-                    <div class="text-right">
-
-                        <button
-                            type="button"
-                            class="btn btn-secondary mr-2"
-                            @click="cerrarFormulario"
-                        >
-                            Cancelar
-                        </button>
-
-
-                        <button
-                            type="submit"
-                            class="btn btn-primary"
-                            :disabled="guardandoUsuario"
-                        >
-
-                            <span v-if="guardandoUsuario">
-
-                                <i class="fa fa-spinner fa-spin"></i>
-
-                                Guardando...
-
-                            </span>
-
-                            <span v-else>
-
-                                <i class="fa fa-save"></i>
-
-                                {{ editandoUsuario
-                                    ? 'Actualizar'
-                                    : 'Guardar'
-                                }}
-
-                            </span>
-
-                        </button>
-
-                    </div>
 
                 </form>
 

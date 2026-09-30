@@ -26,7 +26,9 @@ class User extends Authenticatable
         'img',
         'rol_id',
         'password',
-        'id_user_padre'
+        'id_user_padre',
+        'tipo_pago',
+        'numero_pago',
     ];
 
     /**

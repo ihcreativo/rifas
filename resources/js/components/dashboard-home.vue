@@ -419,15 +419,15 @@
                             <div class="h5 text-center p-3 card">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <a target="_blank" :href="path+'/r/'+rifaSeleccionada.token+'/'+vn.token">
-                                        <strong>{{ vn.nombre }} isas</strong>
+                                        <strong>{{ vn.nombre }} </strong>
                                     </a>
                                     <span class="badge badge-primary float-right">
                                         {{ vn.cantidad_numeros }}
                                     </span>
                                 </div>
                                 <div class="d-flex flex-wrap">
-                                    <span v-for="(numero, ni) in vn.numeros" :key="ni" class="numero-bolita">
-                                        {{ String(numero).padStart(2, '0') }}
+                                    <span v-for="(numeros, ni) in vn.numeros" :key="ni" :class="numeros.estado" class="numero-bolita">
+                                        {{ String(numeros.numero).padStart(2, '0') }}
                                     </span>
                                 </div>
                             </div>
@@ -888,6 +888,9 @@
     }
   </script>
   <style scoped>
+    .disponible{color: #244902;}
+    .reservado{background-color: #ffc107; color:white;}
+    .pagado{background-color: #dc3545; color: white}
     .colmin {width: 1%; white-space: nowrap; text-align: center}
     .loading {opacity: .45; pointer-events: none; user-select: none}
     .bg-1{background: #2cd7ea; border:none}

@@ -48,6 +48,14 @@ Route::post('/rifas/subir-imagenes', [RifaController::class, 'subirImagenes']);
 Route::get('/rifas/{id}/imagenes', [RifaController::class, 'imagenes']);
 Route::delete('/rifas/imagenes/{id}', [RifaController::class, 'eliminarImagen']);
 
+//admin vendedor
+Route::get( '/rifas-vendedor', [RifaController::class, 'getRifasByVendedor'] );
+Route::post(
+    '/rifas-vendedor/numero/{id}/estado',
+    [RifaController::class, 'cambiarEstadoNumero']
+);
+
+
 
 
 

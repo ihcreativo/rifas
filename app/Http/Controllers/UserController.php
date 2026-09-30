@@ -51,6 +51,8 @@ class UserController extends Controller
             'email' => 'required|email|max:150|unique:users,email',
             'username' => 'required|string|max:100|unique:users,username',
             'password' => 'required|string|min:6',
+            'tipo_pago' => 'nullable|string|max:50',
+            'numero_pago' => 'nullable|string|max:100',
         ]);
 
         try {
@@ -64,6 +66,8 @@ class UserController extends Controller
                 'img' => 'none.png',
                 'rol_id' => 2,
                 'id_user_padre' => 1,
+                'tipo_pago' =>$request->tipo_pago,
+                'numero_pago' =>$request->numero_pago,
                 'password' => Hash::make($request->password),
             ]);
 
@@ -96,6 +100,8 @@ class UserController extends Controller
             'last_name' => 'required|string|max:100',
             'email' => 'required|email|max:150|unique:users,email,' . $id,
             'username' => 'required|string|max:100|unique:users,username,' . $id,
+            'tipo_pago' => 'nullable|string|max:50',
+            'numero_pago' => 'nullable|string|max:100',
 
         ]);
 
@@ -105,6 +111,8 @@ class UserController extends Controller
             $usuario->last_name = $request->last_name;
             $usuario->email = $request->email;
             $usuario->username = $request->username;
+            $usuario->tipo_pago = $request->tipo_pago;
+            $usuario->numero_pago = $request->numero_pago;
 
             if ($request->filled('password')) {
                 $usuario->password = Hash::make($request->password);
@@ -148,4 +156,48 @@ class UserController extends Controller
             'estado' => $usuario->estado
         ]);
     }
+     public function showChangePasswordGet() {
+        return view('auth.change-password');
+    }
+
+public function changePasswordPost(Request $request)
+{
+    $request->validate([
+        'current-password' => 'required',
+        'new-password' => 'required|string|min:8|confirmed',
+    ]);
+
+
+    if (!Hash::check(
+        $request->get('current-password'),
+        auth()->user()->password
+    )) {
+
+        return redirect()
+            ->back()
+            ->with('error', 'La contraseña actual no es correcta.');
+    }
+
+    if (
+        $request->get('current-password') ===
+        $request->get('new-password')
+    ) {
+        return redirect()
+            ->back()
+            ->with('error', 'La nueva contraseña no puede ser igual a la actual.');
+    }
+
+    $user = auth()->user();
+
+    $user->password = Hash::make(
+        $request->get('new-password')
+    );
+
+    $user->save();
+
+    return redirect()
+        ->back()
+        ->with('success', 'La contraseña fue cambiada correctamente.');
+}
+
 }

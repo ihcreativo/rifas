@@ -39,6 +39,7 @@ class Rifa extends Model
     {
         return $this->hasMany(RifaNumero::class);
     }
+
     public function imagenes()
     {
         return $this->hasMany(RifaImagen::class, 'rifa_id')

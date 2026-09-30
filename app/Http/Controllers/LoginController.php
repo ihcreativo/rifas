@@ -35,9 +35,14 @@ class LoginController extends Controller
             return view('auth.login');  
             //return redirect()->route('login');
         }else{
-            //$idtipo = auth()->user()->rol_id; 
+            $idtipo = auth()->user()->rol_id; 
             // echo auth()->user();
-            return view('dashboard');
+            if($idtipo === 1){
+                return view('dashboard');
+            }
+            if($idtipo === 2){
+                return view('dashboard_vendedor', ['token' => auth()->user()->token]);
+            }
         }   
     }
 
