@@ -16,9 +16,35 @@ use Illuminate\Support\Facades\Storage;
 class RifaController extends Controller
 {
 
+    // public function index(Request $request)
+    // {
+    //     $query = RifaNumero::where('rifa_id', $request->rifa_id);
+
+    //     // Si viene vendedor_id, mostrar únicamente
+    //     // los números asignados a ese vendedor
+    //     if (isset($request->vendedor_id)) {
+    //         $query->where('id_vendedor', $request->vendedor_id);
+    //     }
+
+    //     $numeros = $query
+    //         ->orderBy('numero', 'asc')
+    //         ->get([
+    //             'id',
+    //             'rifa_id',
+    //             'numero',
+    //             'estado',
+    //             'id_vendedor',
+    //         ]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'numeros' => $numeros
+    //     ]);
+    // }
     public function index(Request $request)
     {
-        $query = RifaNumero::where('rifa_id', $request->rifa_id);
+        $query = RifaNumero::with('rifa')
+            ->where('rifa_id', $request->rifa_id);
 
         // Si viene vendedor_id, mostrar únicamente
         // los números asignados a ese vendedor
@@ -38,6 +64,7 @@ class RifaController extends Controller
 
         return response()->json([
             'success' => true,
+            'rifa' => $numeros->first()?->rifa,
             'numeros' => $numeros
         ]);
     }
@@ -91,7 +118,7 @@ class RifaController extends Controller
             'idV' => $vendedor->id,
             'imagenes' => $imagenes,
             'imagenCompartir' => $imagenCompartir,
-            'title' => $rifa->nombre,
+            'title' => $rifa->nombretoken,
         ]);
     }
 
@@ -337,6 +364,7 @@ class RifaController extends Controller
             'cantidad_numeros' => 'required|integer|min:1',
             'fecha_sorteo' => 'required|date',
             'validacion_sorteo' => 'required|string|max:50',
+            'terminos_condiciones' => 'nullable|string',
         ]);
 
         try {
@@ -353,7 +381,8 @@ class RifaController extends Controller
                 'cantidad_numeros' => $request->cantidad_numeros,
                 'fecha_sorteo' => $request->fecha_sorteo,
                 'validacion_sorteo' => $request->validacion_sorteo,
-                'participantes' => 1
+                'participantes' => 1,
+                'terminos_condiciones' => $request->terminos_condiciones
             ]);
 
             /*

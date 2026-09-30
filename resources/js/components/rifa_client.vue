@@ -134,6 +134,7 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
                     <div class="spinner-border text-primary" role="status" ></div>
                     <p class="mt-3">Cargando números...</p>
                 </div>
+
                 <!-- =====================================================
                     NUMEROS SELECCIONADOS
                 ====================================================== -->
@@ -180,6 +181,20 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
                         </div>
                     </div>
                 </div>
+
+                <div>
+                    <div class="text-center mt-3 mb-3">
+                        <button
+                            type="button"
+                            class="btn btn-gray"
+                            @click="mostrarTerminos = true"
+                        >
+                            📄 Ver términos y condiciones
+                        </button>
+                    </div>
+                </div>
+
+
             
                
 
@@ -187,7 +202,7 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
                     SIN SELECCION
                 ====================================================== -->
 
-                <div
+                <!-- <div
                     v-if="
                         status === state.LOADED &&
                         numeros_seleccionados.length === 0
@@ -198,7 +213,7 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
 
                     Selecciona uno o varios números para reservar.
 
-                </div>
+                </div> -->
 
 
                 <!-- =====================================================
@@ -232,8 +247,72 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
 
                 </div>
             </div>
-        </div>
 
+
+            
+        </div>
+        <!-- TERMINOS Y CONDICIONES -->
+        <div
+            v-if="mostrarTerminos"
+            class="modal-rifa"
+            tabindex="-1"
+            role="dialog"
+        >
+            <!-- Fondo oscuro -->
+            <div
+                class="modal-rifa-backdrop"
+                @click="mostrarTerminos = false"
+            ></div>
+
+            <!-- Ventana -->
+            <div
+                class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen"
+                role="document"
+            >
+                <div class="modal-content modal-rifa-content">
+
+                    <!-- CABECERA -->
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            📄 Términos y condiciones
+                        </h5>
+
+                        <button
+                            type="button"
+                            class="close"
+                            @click="mostrarTerminos = false"
+                        >
+                            <span>&times;</span>
+                        </button>
+                    </div>
+
+                    <!-- CONTENIDO CON SCROLL -->
+                    <div class="modal-body">
+
+                        <div
+                            class="terminos-contenido"
+                            v-html="terminosCondiciones"
+                        ></div>
+
+                    </div>
+
+                    <!-- PIE -->
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            @click="mostrarTerminos = false"
+                        >
+                            Cerrar
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- TERMINOS Y CONDICIONES FIN -->
     </div>
 
 </template>
@@ -249,6 +328,7 @@ export default {
         vendedor: {type: Object, default:[]},
         idv: {type: String, default: '0'},
         imagenes: {type: Array, default: () => []},
+        // terminosCondiciones: {type: String, default: '' }
     },
 
     data() {
@@ -270,6 +350,9 @@ export default {
             pantalla : 'numeros',
             nombre_cliente: '',
             whatsapp_cliente: '',
+            mostrarTerminos: false,
+            terminosCondiciones:'',
+            rifa : []
         }
 
     },
@@ -315,14 +398,20 @@ export default {
                 console.log('Respuesta números:',res.data);
                 if(res.data.success){
                     this.numeros =res.data.numeros;
+                    this.rifa = res.data.rifa;
+                    this.terminosCondiciones = this.rifa.terminos_condiciones;
                     this.status = this.state.LOADED;
-                    console.log(this.numeros);
+                  
+                    console.log('todo')
                 }else{
                     this.status =this.state.FAILED;
+                    alert('isaias');
+                    
                 }
             }).catch(error => {
                 console.log('Error cargando rifa:',error);
-                this.status = this.state.FAILED;
+                
+                 this.status = this.state.FAILED;
             });
         },
 
@@ -508,6 +597,74 @@ export default {
 
 
 <style scoped>
+.modal-rifa {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+/* Fondo */
+.modal-rifa-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 1;
+}
+
+/* Ventana */
+.modal-rifa .modal-dialog {
+    position: relative;
+    z-index: 2;
+}
+
+/* Contenedor blanco */
+.modal-rifa-content {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Área de términos */
+.terminos-contenido {
+    max-height: 65vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 10px 15px;
+
+    color: #212529;
+    background: #fff;
+
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+/* Scroll */
+.terminos-contenido::-webkit-scrollbar {
+    width: 8px;
+}
+
+.terminos-contenido::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.terminos-contenido::-webkit-scrollbar-thumb {
+    background: #999;
+    border-radius: 10px;
+}
+
+.terminos-contenido::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+
 .rifa-galeria {
     width: 100%;
     max-width: 700px;
@@ -938,6 +1095,20 @@ export default {
 | RESPONSIVE
 |--------------------------------------------------------------------------
 */
+.terminos-contenido {
+    white-space: normal;
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+.modal {
+    z-index: 1055;
+}
+
+.modal-backdrop {
+    z-index: 1050;
+    
+}
 
 @media(max-width: 768px){
 

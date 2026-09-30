@@ -222,6 +222,21 @@
                                             </button>
                                         </div>
                                     </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label for="terminos_condiciones">
+                                                Términos y condiciones
+                                            </label>
+
+                                            <textarea
+                                                id="terminos_condiciones"
+                                                v-model="form.terminos_condiciones"
+                                                class="form-control"
+                                                rows="10"
+                                                placeholder="Ingrese los términos y condiciones de la rifa..."
+                                            ></textarea>
+                                        </div>
+                                    </div>
     
                                 </div>
     
@@ -458,7 +473,8 @@
                     valor_opcion: '',
                     cantidad_numeros: '',
                     fecha_sorteo: '',
-                    validacion_sorteo: ''
+                    validacion_sorteo: '',
+                    terminos_condiciones: ''
                 },
                 rifas: [],
                 cargandoRifas: false,

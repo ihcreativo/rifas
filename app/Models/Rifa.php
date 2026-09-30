@@ -23,6 +23,7 @@ class Rifa extends Model
         'fecha_sorteo',
         'validacion_sorteo',
         'estado',
+        'terminos_condiciones',
         'participantes' //numero de vendedores
     ];
 
