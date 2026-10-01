@@ -19,27 +19,24 @@ class WompiController extends Controller
         ], 200);
     }
     
-    public function crearPago(Request $request)
+   public function crearPago(Request $request)
     {
         $request->validate([
             'monto' => 'required|integer|min:1',
+            'referencia' => 'required|string|max:100',
         ]);
 
         try {
 
-            // Monto recibido en pesos colombianos
             $montoPesos = $request->monto;
-
-            // Wompi trabaja en centavos
             $montoCentavos = $montoPesos * 100;
 
-            // Referencia única
-            $referencia = 'RIFA-' . strtoupper(Str::random(12));
+            // IMPORTANTE:
+            // usamos la referencia creada durante la reserva
+            $referencia = $request->referencia;
 
-            // Moneda
             $moneda = 'COP';
 
-            // Firma de integridad
             $cadena = $referencia
                 . $montoCentavos
                 . $moneda
@@ -49,24 +46,18 @@ class WompiController extends Controller
 
             return response()->json([
                 'success' => true,
-
                 'public_key' => config('services.wompi.public_key'),
-
                 'reference' => $referencia,
-
                 'amount_in_cents' => $montoCentavos,
-
                 'currency' => $moneda,
-
                 'signature' => $firma,
-
                 'checkout_url' => 'https://checkout.wompi.co/p/',
             ]);
 
         } catch (\Exception $e) {
 
             Log::error('Error creando pago Wompi', [
-                'error' => $e->getMessage(),
+                'error' => $e->getMessage()
             ]);
 
             return response()->json([

@@ -166,6 +166,23 @@ Para confirmar la reserva de los números seleccionados, debes realizar el pago 
                             CANCELAR
                         </button>
                     </div>
+
+<div v-if="numeros_seleccionados.length > 0" class="mt-3">
+    <strong>
+        {{ numeros_seleccionados.length }} número(s)
+    </strong>
+
+    <div>
+        Valor por número:
+        ${{ Number(rifa.valor_opcion).toLocaleString('es-CO') }}
+    </div>
+
+    <div class="fs-5">
+        <strong>
+            Total: ${{ total_seleccionado.toLocaleString('es-CO') }}
+        </strong>
+    </div>
+</div>
                 </div>
 
                 <!-- =====================================================
@@ -329,6 +346,12 @@ export default {
         idv: {type: String, default: '0'},
         imagenes: {type: Array, default: () => []},
         // terminosCondiciones: {type: String, default: '' }
+    },
+    computed: {
+        total_seleccionado() {
+            const valor = parseFloat(this.rifa.valor_opcion || 0);
+            return this.numeros_seleccionados.length * valor;
+        }
     },
 
     data() {
@@ -529,6 +552,7 @@ export default {
             });
     
         },
+
         reservar_numeros_db: function(){
             this.reservando = true;
             let fields = new FormData();
@@ -544,13 +568,19 @@ export default {
                 console.log('Respuesta reserva:', res.data);
                 if(res.data.success){
                     //this.numeros = res.data.numeros;
-                    this.numeros_seleccionados = [];
-                    this.cargar_rifas();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Reserva realizada',
-                        text: res.data.message
-                    });
+
+                   const referencia = res.data.referencia_wompi;
+
+                   this.iniciar_pago_wompi(referencia);
+
+                    // this.numeros_seleccionados = [];
+                    // this.cargar_rifas();
+                    // Swal.fire({
+                    //     icon: 'success',
+                    //     title: 'Reserva realizada',
+                    //     text: res.data.message
+                    // });
+                    // this.iniciar_pago_wompi(res.data.referencia_wompi);
                 }else{
                     Swal.fire({
                         icon: 'warning',
@@ -576,7 +606,79 @@ export default {
             }).finally(() => {
                 this.reservando = false;
             });
-        }
+        },
+        iniciar_pago_wompi: function(referencia) {
+
+            const valor = parseFloat(this.rifa.valor_opcion || 0);
+            const cantidad = this.numeros_seleccionados.length;
+            const monto = cantidad * valor;
+
+            if (!referencia) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se recibió la referencia del pago.'
+                });
+                return;
+            }
+
+            if (monto <= 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'El valor del pago no es válido.'
+                });
+                return;
+            }
+
+            let fields = new FormData();
+
+            fields.append('referencia', referencia);
+            fields.append('monto', Math.round(monto));
+
+            axios.post('/api/wompi/crear-pago', fields)
+                .then(res => {
+
+                    console.log('Respuesta Wompi:', res.data);
+
+                    if (!res.data.success) {
+                        throw new Error(
+                            res.data.message || 'No fue posible crear el pago.'
+                        );
+                    }
+
+                    const data = res.data;
+
+                    console.log('Referencia:', data.reference);
+                    console.log('Monto:', data.amount_in_cents);
+                    console.log('Firma:', data.signature);
+
+                    /*
+                    * Por ahora NO limpiamos los números.
+                    * Primero vamos a abrir el checkout.
+                    */
+
+                    window.location.href =
+                        data.checkout_url +
+                        '?public-key=' + encodeURIComponent(data.public_key) +
+                        '&currency=' + encodeURIComponent(data.currency) +
+                        '&amount-in-cents=' + encodeURIComponent(data.amount_in_cents) +
+                        '&reference=' + encodeURIComponent(data.reference) +
+                        '&signature:integrity=' + encodeURIComponent(data.signature);
+                })
+                .catch(error => {
+
+                    console.error('Error iniciando pago Wompi:', error);
+                    console.error('Respuesta:', error.response);
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No fue posible iniciar el pago.'
+                    });
+                });
+        },
+
     },
 
 
