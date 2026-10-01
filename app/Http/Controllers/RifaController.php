@@ -174,14 +174,19 @@ class RifaController extends Controller
             /*
             | Reservamos los números.
             */
+            $referenciaWompi = 'RIFA-' . strtoupper(Str::random(12));
+
             RifaNumero::whereIn('id', $request->numeros)
                 ->where('rifa_id', $request->rifa_id)
                 ->update([
                     'estado' => 'reservado',
                     'nombre' => $request->nombre_cliente,
                     'whatsapp' => $request->whatsapp_cliente,
-                    'fecha_reserva' => now()
+                    'fecha_reserva' => now(),
+                    'wompi_reference' => $referenciaWompi,
+                    'estado_pago' => 'pendiente',
                 ]);
+            
 
             DB::commit();
             try {
@@ -330,10 +335,12 @@ class RifaController extends Controller
                     'numero',
                     'estado',
                 ]);
+            
 
             return response()->json([
                 'success' => true,
                 'message' => 'Los números fueron reservados correctamente.',
+                'referencia_wompi' => $referenciaWompi,
                 'numeros' => $numerosActualizados
             ]);
 

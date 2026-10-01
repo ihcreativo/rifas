@@ -9,3 +9,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::post('/wompi/webhook', [WompiController::class, 'webhook']);
+Route::post('/wompi/crear-pago', [WompiController::class, 'crearPago']);
