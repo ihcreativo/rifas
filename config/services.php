@@ -13,6 +13,14 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'wompi' => [
+        'public_key' => env('pub_prod_iqE4SfbZ7XDd6spBGJidMxgGci0Ajj76'),
+        'private_key' => env('prv_prod_RNjCoFDT4UyBCVZo3VZYOsvXkyfVnD37'),
+        'events_secret' => env('prod_events_8SdjJ3d69Jtbu5lmP5xF7l0ZvKxg6Zxf'),
+        'integrity_secret' => env('prod_integrity_wfX1hbkkcA6kLSiSjQ73Tj66dEwHuvHb'),
+        'api_url' => env('WOMPI_API_URL', 'https://sandbox.wompi.co/v1'),
+    ],
+
 
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),

@@ -157,59 +157,80 @@
                     <h6 class="mb-3">
                         Números asignados
                     </h6>
+                    <div class="row">
+                        <div class="col-sm-12 col-lg-8">
+                            <div class=" numeros-container">
+                                <div
+                                    v-for="numero in rifa.numeros"
+                                    :key="numero.id"
+                                    class="numero-wrapper"
+                                >
 
-                    <div class="numeros-container">
+                                    <div
+                                        class="numero-bolita"
+                                        :class="claseEstado(numero.estado)"
+                                        :title="'Estado: ' + numero.estado"
+                                        @click="abrirEstados(numero)"
+                                    >
+                                        {{ String(numero.numero).padStart(2, '0') }}
+                                    </div>
 
-                        <div
-                            v-for="numero in rifa.numeros"
-                            :key="numero.id"
-                            class="numero-wrapper"
-                        >
+                                    <!-- MENÚ DE ESTADOS -->
+                                    <div
+                                        v-if="numeroEditando && numeroEditando.id === numero.id"
+                                        class="menu-estado"
+                                    >
 
-                            <div
-                                class="numero-bolita"
-                                :class="claseEstado(numero.estado)"
-                                :title="'Estado: ' + numero.estado"
-                                @click="abrirEstados(numero)"
-                            >
-                                {{ String(numero.numero).padStart(2, '0') }}
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-success"
+                                            @click.stop="cambiarEstado(numero, 'disponible')"
+                                        >
+                                            🟢 Disponible
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-warning"
+                                            @click.stop="cambiarEstado(numero, 'reservado')"
+                                        >
+                                            🟡 Reservado
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger"
+                                            @click.stop="cambiarEstado(numero, 'pagado')"
+                                        >
+                                            🔴 Pagado
+                                        </button>
+
+                                    </div>
+
+                                </div>
                             </div>
-
-                            <!-- MENÚ DE ESTADOS -->
-                            <div
-                                v-if="numeroEditando && numeroEditando.id === numero.id"
-                                class="menu-estado"
-                            >
-
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-success"
-                                    @click.stop="cambiarEstado(numero, 'disponible')"
-                                >
-                                    🟢 Disponible
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-warning"
-                                    @click.stop="cambiarEstado(numero, 'reservado')"
-                                >
-                                    🟡 Reservado
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-danger"
-                                    @click.stop="cambiarEstado(numero, 'pagado')"
-                                >
-                                    🔴 Pagado
-                                </button>
-
+                        </div>
+                        <div class="col-lg-4 col-sm-12">
+                           <div class="card p-3 my-3">
+                            <div class="card-title">
+                                Ventas
                             </div>
+                               <div  v-for="(num_vendido, i) in rifa.numeros" :key="i">
+                                <div class="py-31" v-if="num_vendido.estado != 'disponible'">
+                                    <span class="badge me-2" :class="num_vendido.estado === 'reservado'?'bg-warning':'bg-danger'" v-if="num_vendido.estado != 'disponible'">
+                                        {{ num_vendido.numero }} 
+                                    </span>
+                                    {{ num_vendido.nombre }}
+                                
+                                </div>
+                               </div> 
+                           </div>
+                              
+                            
 
                         </div>
-
                     </div>
+                   
 
                     <!-- LEYENDA -->
                     <div class="leyenda mt-4">

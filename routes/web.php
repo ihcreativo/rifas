@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route; 
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\WompiController;
 use App\Http\Controllers\SettingController;
 
 use App\Http\Controllers\RifaController;
@@ -54,6 +54,10 @@ Route::post(
     '/rifas-vendedor/numero/{id}/estado',
     [RifaController::class, 'cambiarEstadoNumero']
 );
+
+
+
+Route::post('/wompi/webhook', [WompiController::class, 'webhook']);
 
 
 
