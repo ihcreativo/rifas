@@ -762,6 +762,22 @@ export default {
 
     mounted() {
         this.cargar_rifas();
+        const parametros = new URLSearchParams(window.location.search);
+        const transaccionId = parametros.get('id');
+
+        if (transaccionId) {
+            Swal.fire({
+                icon: 'info',
+                title: '¡Gracias por participar!',
+                html: `
+                    <p>Hemos recibido tu regreso desde la plataforma de pagos.</p>
+                    <p>Tu pago está pendiente de confirmación.</p>
+                    <p>Una vez verificado, tus números quedarán confirmados.</p>
+                    <p>🍀 ¡Mucha suerte en nuestra rifa!</p>
+                `,
+                confirmButtonText: 'Entendido'
+            });
+        }
 
     }
 
