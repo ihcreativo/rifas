@@ -57,10 +57,6 @@ Route::post(
 
 
 
-Route::post('/wompi/webhook', [WompiController::class, 'webhook']);
-
-
-
 
 
 
