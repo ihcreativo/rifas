@@ -607,77 +607,149 @@ export default {
                 this.reservando = false;
             });
         },
-        iniciar_pago_wompi: function(referencia) {
 
+        iniciar_pago_wompi: function(referencia) {
             const valor = parseFloat(this.rifa.valor_opcion || 0);
             const cantidad = this.numeros_seleccionados.length;
-            const monto = cantidad * valor;
+            const monto = Math.round(cantidad * valor);
 
-            if (!referencia) {
+            if (!referencia || monto <= 0) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'No se recibió la referencia del pago.'
+                    text: 'La referencia o el valor del pago no son válidos.'
                 });
                 return;
             }
 
-            if (monto <= 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'El valor del pago no es válido.'
-                });
-                return;
-            }
-
-            let fields = new FormData();
-
+            const fields = new FormData();
             fields.append('referencia', referencia);
-            fields.append('monto', Math.round(monto));
+            fields.append('monto', monto);
 
             axios.post('/api/wompi/crear-pago', fields)
                 .then(res => {
+                    const data = res.data;
 
-                    console.log('Respuesta Wompi:', res.data);
-
-                    if (!res.data.success) {
+                    if (!data.success) {
                         throw new Error(
-                            res.data.message || 'No fue posible crear el pago.'
+                            data.message || 'No fue posible crear el pago.'
                         );
                     }
 
-                    const data = res.data;
+                    if (!data.redirect_url) {
+                        throw new Error(
+                            'Laravel no devolvió la URL de retorno de la rifa.'
+                        );
+                    }
 
-                    console.log('Referencia:', data.reference);
-                    console.log('Monto:', data.amount_in_cents);
-                    console.log('Firma:', data.signature);
+                    // Crear formulario para abrir Wompi.
+                    const form = document.createElement('form');
+                    form.method = 'GET';
+                    form.action = data.checkout_url ||
+                        'https://checkout.wompi.co/p/';
 
-                    /*
-                    * Por ahora NO limpiamos los números.
-                    * Primero vamos a abrir el checkout.
-                    */
+                    const parametros = {
+                        'public-key': data.public_key,
+                        'currency': data.currency,
+                        'amount-in-cents': data.amount_in_cents,
+                        'reference': data.reference,
+                        'signature:integrity': data.signature,
+                        'redirect-url': data.redirect_url
+                    };
 
-                    window.location.href =
-                        data.checkout_url +
-                        '?public-key=' + encodeURIComponent(data.public_key) +
-                        '&currency=' + encodeURIComponent(data.currency) +
-                        '&amount-in-cents=' + encodeURIComponent(data.amount_in_cents) +
-                        '&reference=' + encodeURIComponent(data.reference) +
-                        '&signature:integrity=' + encodeURIComponent(data.signature);
+                    Object.keys(parametros).forEach(nombre => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = nombre;
+                        input.value = parametros[nombre];
+                        form.appendChild(input);
+                    });
+
+                    document.body.appendChild(form);
+                    form.submit();
                 })
                 .catch(error => {
-
                     console.error('Error iniciando pago Wompi:', error);
-                    console.error('Respuesta:', error.response);
 
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'No fue posible iniciar el pago.'
+                        title: 'Error al iniciar el pago',
+                        text: error.message ||
+                            'No fue posible iniciar el pago.'
                     });
                 });
         },
+        // iniciar_pago_wompi: function(referencia) {
+
+        //     const valor = parseFloat(this.rifa.valor_opcion || 0);
+        //     const cantidad = this.numeros_seleccionados.length;
+        //     const monto = cantidad * valor;
+
+        //     if (!referencia) {
+        //         Swal.fire({
+        //             icon: 'error',
+        //             title: 'Error',
+        //             text: 'No se recibió la referencia del pago.'
+        //         });
+        //         return;
+        //     }
+
+        //     if (monto <= 0) {
+        //         Swal.fire({
+        //             icon: 'error',
+        //             title: 'Error',
+        //             text: 'El valor del pago no es válido.'
+        //         });
+        //         return;
+        //     }
+
+        //     let fields = new FormData();
+
+        //     fields.append('referencia', referencia);
+        //     fields.append('monto', Math.round(monto));
+
+        //     axios.post('/api/wompi/crear-pago', fields)
+        //         .then(res => {
+
+        //             console.log('Respuesta Wompi:', res.data);
+
+        //             if (!res.data.success) {
+        //                 throw new Error(
+        //                     res.data.message || 'No fue posible crear el pago.'
+        //                 );
+        //             }
+
+        //             const data = res.data;
+
+        //             console.log('Referencia:', data.reference);
+        //             console.log('Monto:', data.amount_in_cents);
+        //             console.log('Firma:', data.signature);
+
+        //             /*
+        //             * Por ahora NO limpiamos los números.
+        //             * Primero vamos a abrir el checkout.
+        //             */
+
+        //             window.location.href =
+        //                 data.checkout_url +
+        //                 '?public-key=' + encodeURIComponent(data.public_key) +
+        //                 '&currency=' + encodeURIComponent(data.currency) +
+        //                 '&amount-in-cents=' + encodeURIComponent(data.amount_in_cents) +
+        //                 '&reference=' + encodeURIComponent(data.reference) +
+        //                 '&signature:integrity=' + encodeURIComponent(data.signature);
+        //         })
+        //         .catch(error => {
+
+        //             console.error('Error iniciando pago Wompi:', error);
+        //             console.error('Respuesta:', error.response);
+
+        //             Swal.fire({
+        //                 icon: 'error',
+        //                 title: 'Error',
+        //                 text: 'No fue posible iniciar el pago.'
+        //             });
+        //         });
+        // },
 
     },
 

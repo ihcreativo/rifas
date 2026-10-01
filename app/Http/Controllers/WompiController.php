@@ -401,163 +401,163 @@ class WompiController extends Controller
     }
     
    public function crearPago(Request $request)
-{
-    $request->validate([
-        'monto' => 'required|integer|min:1',
-        'referencia' => 'required|string|max:100',
-    ]);
-
-    try {
-
-        /*
-        |--------------------------------------------------------------------------
-        | 1. BUSCAR LOS NÚMEROS DE LA RESERVA
-        |--------------------------------------------------------------------------
-        */
-
-        $numeros = \App\Models\RifaNumero::where(
-            'wompi_reference',
-            $request->referencia
-        )->get();
-
-        if ($numeros->isEmpty()) {
-
-            return response()->json([
-                'success' => false,
-                'message' => 'No se encontró la reserva.'
-            ], 404);
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 2. OBTENER RIFA
-        |--------------------------------------------------------------------------
-        */
-
-        $rifa = \App\Models\Rifa::find(
-            $numeros->first()->rifa_id
-        );
-
-        if (!$rifa) {
-
-            return response()->json([
-                'success' => false,
-                'message' => 'No se encontró la rifa.'
-            ], 404);
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 3. OBTENER VENDEDOR
-        |--------------------------------------------------------------------------
-        */
-
-        $vendedor = \App\Models\User::find(
-            $numeros->first()->id_vendedor
-        );
-
-        if (!$vendedor) {
-
-            return response()->json([
-                'success' => false,
-                'message' => 'No se encontró el vendedor.'
-            ], 404);
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 4. VALIDAR TOKENS
-        |--------------------------------------------------------------------------
-        */
-
-        if (!$rifa->token || !$vendedor->token) {
-
-            return response()->json([
-                'success' => false,
-                'message' => 'La rifa o el vendedor no tienen token configurado.'
-            ], 400);
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 5. MONTO
-        |--------------------------------------------------------------------------
-        */
-
-        $montoPesos = $request->monto;
-
-        $montoCentavos = $montoPesos * 100;
-
-        $referencia = $request->referencia;
-
-        $moneda = 'COP';
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 6. FIRMA DE INTEGRIDAD WOMPI
-        |--------------------------------------------------------------------------
-        */
-
-        $cadena = $referencia
-            . $montoCentavos
-            . $moneda
-            . config('services.wompi.integrity_secret');
-
-        $firma = hash('sha256', $cadena);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 7. URL DE RETORNO
-        |--------------------------------------------------------------------------
-        */
-
-        $redirectUrl = 'https://rifa.ishevi.com/r/'
-            . $rifa->token
-            . '/'
-            . $vendedor->token;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | 8. RESPUESTA
-        |--------------------------------------------------------------------------
-        */
-
-        return response()->json([
-            'success' => true,
-
-            'public_key' => config('services.wompi.public_key'),
-
-            'reference' => $referencia,
-
-            'amount_in_cents' => $montoCentavos,
-
-            'currency' => $moneda,
-
-            'signature' => $firma,
-
-            'redirect_url' => $redirectUrl,
-
-            'checkout_url' => 'https://checkout.wompi.co/p/',
+    {
+        $request->validate([
+            'monto' => 'required|integer|min:1',
+            'referencia' => 'required|string|max:100',
         ]);
 
-    } catch (\Exception $e) {
+        try {
 
-        Log::error('Error creando pago Wompi', [
-            'error' => $e->getMessage()
-        ]);
+            /*
+            |--------------------------------------------------------------------------
+            | 1. BUSCAR LOS NÚMEROS DE LA RESERVA
+            |--------------------------------------------------------------------------
+            */
 
-        return response()->json([
-            'success' => false,
-            'message' => 'No fue posible crear el pago.'
-        ], 500);
+            $numeros = \App\Models\RifaNumero::where(
+                'wompi_reference',
+                $request->referencia
+            )->get();
+
+            if ($numeros->isEmpty()) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró la reserva.'
+                ], 404);
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 2. OBTENER RIFA
+            |--------------------------------------------------------------------------
+            */
+
+            $rifa = \App\Models\Rifa::find(
+                $numeros->first()->rifa_id
+            );
+
+            if (!$rifa) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró la rifa.'
+                ], 404);
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 3. OBTENER VENDEDOR
+            |--------------------------------------------------------------------------
+            */
+
+            $vendedor = \App\Models\User::find(
+                $numeros->first()->id_vendedor
+            );
+
+            if (!$vendedor) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró el vendedor.'
+                ], 404);
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 4. VALIDAR TOKENS
+            |--------------------------------------------------------------------------
+            */
+
+            if (!$rifa->token || !$vendedor->token) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La rifa o el vendedor no tienen token configurado.'
+                ], 400);
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 5. MONTO
+            |--------------------------------------------------------------------------
+            */
+
+            $montoPesos = $request->monto;
+
+            $montoCentavos = $montoPesos * 100;
+
+            $referencia = $request->referencia;
+
+            $moneda = 'COP';
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 6. FIRMA DE INTEGRIDAD WOMPI
+            |--------------------------------------------------------------------------
+            */
+
+            $cadena = $referencia
+                . $montoCentavos
+                . $moneda
+                . config('services.wompi.integrity_secret');
+
+            $firma = hash('sha256', $cadena);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 7. URL DE RETORNO
+            |--------------------------------------------------------------------------
+            */
+
+            $redirectUrl = 'https://rifa.ishevi.com/r/'
+                . $rifa->token
+                . '/'
+                . $vendedor->token;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 8. RESPUESTA
+            |--------------------------------------------------------------------------
+            */
+
+            return response()->json([
+                'success' => true,
+
+                'public_key' => config('services.wompi.public_key'),
+
+                'reference' => $referencia,
+
+                'amount_in_cents' => $montoCentavos,
+
+                'currency' => $moneda,
+
+                'signature' => $firma,
+
+                'redirect_url' => $redirectUrl,
+
+                'checkout_url' => 'https://checkout.wompi.co/p/',
+            ]);
+
+        } catch (\Exception $e) {
+
+            Log::error('Error creando pago Wompi', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No fue posible crear el pago.'
+            ], 500);
+        }
     }
-}
     
 }
