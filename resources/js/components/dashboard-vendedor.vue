@@ -210,13 +210,13 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-sm-12">
-                           <div class="card p-3 my-3">
-                            <div class="card-title">
+                        <div class="col-lg-4 col-sm-12 p-0 mx-0 my-0">
+                           <div class="card py-2 px-2 my-3">
+                            <div class="card-title text-center">
                                 Ventas
                             </div>
-                            <div  v-for="(num_vendido, i) in rifa.numeros" :key="i">
-                                <div class="py-31" v-if="num_vendido.estado != 'disponible'">
+                            <div class="px-0 py-0 m-0"  v-for="(num_vendido, i) in rifa.numeros" :key="i">
+                                <div class="py-2 px-0" v-if="num_vendido.estado != 'disponible'">
                                     <span class="badge me-2" :class="num_vendido.estado === 'reservado'?'bg-warning':'bg-danger'" v-if="num_vendido.estado != 'disponible'">
                                         {{ num_vendido.numero }} 
                                     </span>
