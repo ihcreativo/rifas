@@ -53,8 +53,25 @@ Route::get( '/rifas-vendedor', [RifaController::class, 'getRifasByVendedor'] );
 Route::post(
     '/rifas-vendedor/numero/{id}/estado',
     [RifaController::class, 'cambiarEstadoNumero']
+)->middleware('auth');
+Route::post(
+    '/rifas/transferir-numeros',
+    [RifaController::class, 'transferirNumeros']
+)->middleware('auth');
+
+// Route::get(
+//     '/rifas-vendedor/numero/{id}/confirmacion-whatsapp',
+//     [RifaController::class, 'datosConfirmacionWhatsApp']
+// );
+Route::get(
+    '/rifas-vendedor/numero/{id}/confirmacion-whatsapp',
+    [RifaController::class, 'datosConfirmacionWhatsApp']
 );
 
+Route::get(
+    '/rifas-vendedor/numero/{id}/cobro-whatsapp',
+    [RifaController::class, 'datosConfirmacionWhatsApp']
+);
 
 
 

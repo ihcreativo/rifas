@@ -412,106 +412,6 @@
 
                        
                     </div>
-                    <!-- Manual -->
-                    
-                    <!-- PANEL DE TRANSFERENCIA DE NUMEROS -->
-                    <div
-                        v-if="vendedorOrigenTransferencia"
-                        class="card border-primary m-3 p-3"
-                    >
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                Transferir números
-                            </h5>
-
-                            <button
-                                type="button"
-                                class="btn btn-outline-secondary btn-sm"
-                                @click="cancelarTransferencia"
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-
-                        <hr>
-
-                        <p>
-                            <strong>Vendedor de origen:</strong>
-                            {{ vendedorOrigenTransferencia.nombre }}
-                        </p>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Vendedor que recibirá los números
-                            </label>
-
-                            <select
-                                class="form-control"
-                                v-model="vendedorDestinoTransferencia"
-                            >
-                                <option value="">Seleccione un vendedor</option>
-
-                                <option
-                                    v-for="v in vendedores"
-                                    :key="v.id"
-                                    :value="String(v.id)"
-                                    v-if="Number(v.id) !== Number(vendedorOrigenTransferencia.id)"
-                                >
-                                    {{ v.firts_name }} {{ v.last_name }}
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="alert alert-warning">
-                            Puedes seleccionar números disponibles, reservados o pagados.
-                            El estado y los datos del cliente se conservarán.
-                        </div>
-
-                    <div class="d-flex flex-wrap mb-2">
-                        <label
-                            v-for="numero in vendedorOrigenTransferencia.numeros"
-                            :key="numero.id"
-                            class="border rounded p-2 m-1"
-                            :class="numero.estado"
-                            style="cursor: pointer;"
-
-                        >
-                            <input
-                                type="checkbox"
-                                :value="Number(numero.id)"
-                                v-model="numerosTransferenciaSeleccionados"
-                            >
-
-                            <strong>
-                                {{ String(numero.numero).padStart(2, '0') }}
-                            </strong>
-
-                            <!-- <small>{{ numero.estado }}</small> -->
-                        </label>
-                    </div>
-
-                    <p>
-                        Números seleccionados:
-                        {{ numerosTransferenciaSeleccionados.length }}
-                    </p>
-                        <button
-                            type="button"
-                            class="btn btn-primary"
-                            :disabled="
-                                transfiriendoNumeros ||
-                                numerosTransferenciaSeleccionados.length === 0 ||
-                                !vendedorDestinoTransferencia
-                            "
-                            @click="confirmarTransferencia"
-                        >
-                            {{ transfiriendoNumeros
-                                ? 'Transfiriendo...'
-                                : 'Confirmar transferencia'
-                            }}
-                        </button>
-                    </div>
-                    <!-- FIN PANEL DE TRANSFERENCIA -->
-                    <!-- fin manual    -->
 
                     <div class="row m-3" v-if="vendedoresConNumeros && vendedoresConNumeros.length">
                         
@@ -524,19 +424,8 @@
                                     <span class="badge badge-primary float-right">
                                         {{ vn.cantidad_numeros }}
                                     </span>
-                                        <div class="text-end">
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-outline-primary px-2"
-                                                @click="iniciarTransferencia(vn)"
-                                            >
-                                                <i class="fa fa-exchange-alt"></i>
-                                        
-                                            </button>
-                                        </div>
                                 </div>
-
-                                <div class="d-flex flex-wrap align-items-center">
+                                <div class="d-flex flex-wrap">
                                     <span v-for="(numeros, ni) in vn.numeros" :key="ni" :class="numeros.estado" class="numero-bolita">
                                         {{ String(numeros.numero).padStart(2, '0') }}
                                     </span>
@@ -568,12 +457,6 @@
 
         data() {
             return {
-                vendedorOrigenTransferencia: null,
-                vendedorDestinoTransferencia: '',
-                numerosTransferenciaSeleccionados: [],
-                transfiriendoNumeros: false,
-
-
                 imagenesSeleccionadas: [],
                 previsualizaciones: [],
                 subiendoImagenes: false,
@@ -620,95 +503,6 @@
         },
 
         methods:{
-
-            iniciarTransferencia(vendedor) {
-                this.vendedorOrigenTransferencia = vendedor;
-                this.vendedorDestinoTransferencia = '';
-                this.numerosTransferenciaSeleccionados = [];
-            },
-
-            cancelarTransferencia() {
-                this.vendedorOrigenTransferencia = null;
-                this.vendedorDestinoTransferencia = '';
-                this.numerosTransferenciaSeleccionados = [];
-            },
-
-            confirmarTransferencia() {
-                if (!this.vendedorOrigenTransferencia) {
-                    return;
-                }
-
-                if (!this.vendedorDestinoTransferencia) {
-                    Swal.fire('Atención', 'Seleccione el vendedor de destino.', 'warning');
-                    return;
-                }
-
-                if (
-                    Number(this.vendedorOrigenTransferencia.id) ===
-                    Number(this.vendedorDestinoTransferencia)
-                ) {
-                    Swal.fire('Atención', 'Seleccione otro vendedor.', 'warning');
-                    return;
-                }
-
-                if (this.numerosTransferenciaSeleccionados.length === 0) {
-                    Swal.fire('Atención', 'Seleccione al menos un número.', 'warning');
-                    return;
-                }
-
-                const datos = {
-                    id_rifa: this.rifaSeleccionada.id,
-                    vendedor_origen_id: this.vendedorOrigenTransferencia.id,
-                    vendedor_destino_id: Number(this.vendedorDestinoTransferencia),
-                    numeros: this.numerosTransferenciaSeleccionados
-                };
-
-                Swal.fire({
-                    title: '¿Confirmar transferencia?',
-                    text: 'Se cambiará el vendedor asignado a los números seleccionados.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, transferir',
-                    cancelButtonText: 'Cancelar'
-                }).then(resultado => {
-                    if (!resultado.isConfirmed) {
-                        return;
-                    }
-
-                    this.transfiriendoNumeros = true;
-
-                    console.log('Datos de transferencia:', datos);
-                    axios.post(
-                        this.path + '/rifas/transferir-numeros',
-                        datos
-                    )
-                    .then(response => {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Transferencia realizada',
-                            text: response.data.message
-                        });
-
-                        this.cancelarTransferencia();
-                        this.cargarVendedoresConNumeros();
-                    })
-                    
-                    .catch(error => {
-                        console.error('Error al transferir números:', error);
-                        console.error('Respuesta de Laravel:', error.response?.data);
-
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error al transferir',
-                            text: error.response?.data?.message
-                                || 'No se pudo realizar la transferencia.'
-                        });
-                    })
-                    .finally(() => {
-                        this.transfiriendoNumeros = false;
-                    });
-                });
-            },
             cargarImagenes: function() {
 
                 if (!this.rifaSeleccionada) {

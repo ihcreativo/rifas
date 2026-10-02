@@ -28,12 +28,12 @@
     "src": "node_modules/@amcharts/amcharts4/.internal/pdfmake/vfs_fonts.js"
   },
   "resources/js/app.css": {
-    "file": "assets/app-970e3753.css",
+    "file": "assets/app-e135ab45.css",
     "src": "resources/js/app.css"
   },
   "resources/js/app.js": {
     "css": [
-      "assets/app-970e3753.css"
+      "assets/app-e135ab45.css"
     ],
     "dynamicImports": [
       "_pdfmake-c4b78dc2.js",
@@ -41,7 +41,7 @@
       "node_modules/@amcharts/amcharts4/.internal/canvg/index.js",
       "node_modules/@amcharts/amcharts4/.internal/bundled/xlsx/xlsx.mjs"
     ],
-    "file": "assets/app-2587e332.js",
+    "file": "assets/app-f55c8dfa.js",
     "isEntry": true,
     "src": "resources/js/app.js"
   },

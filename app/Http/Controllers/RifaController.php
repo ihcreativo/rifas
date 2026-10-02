@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\RifaImagen;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class RifaController extends Controller
 {
@@ -639,6 +640,7 @@ class RifaController extends Controller
                         // 'numeros' => $numeros->pluck('numero')->values(),
                         'numeros' => $numeros->map(function ($numero) {
                         return [
+                            'id'=> $numero->id,
                             'numero' => $numero->numero,
                             'estado' => $numero->estado,
                             'nombre' => $numero->nombre,
@@ -756,4 +758,185 @@ class RifaController extends Controller
             ], 500);
         }
     }
+
+    public function transferirNumeros(Request $request)
+    {
+        $datos = $request->validate([
+            'id_rifa' => 'required|integer|exists:rifas,id',
+            'vendedor_origen_id' => 'required|integer|different:vendedor_destino_id',
+            'vendedor_destino_id' => 'required|integer|different:vendedor_origen_id',
+            'numeros' => 'required|array|min:1',
+            'numeros.*' => 'required|integer|distinct',
+        ]);
+
+        $destinoValido = User::where('id', $datos['vendedor_destino_id'])
+            ->where('rol_id', 2)
+            ->exists();
+
+        if (!$destinoValido) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El vendedor de destino no es válido.'
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($datos) {
+
+                // Bloquear y comprobar que los números pertenecen
+                // a la rifa y al vendedor de origen.
+                $numeros = RifaNumero::where('rifa_id', $datos['id_rifa'])
+                    ->where('id_vendedor', $datos['vendedor_origen_id'])
+                    ->whereIn('id', $datos['numeros'])
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($numeros->count() !== count($datos['numeros'])) {
+                    throw new \RuntimeException(
+                        'Uno o más números no pertenecen al vendedor de origen o a esta rifa.'
+                    );
+                }
+
+                // Solo cambia el vendedor. Se conservan el estado,
+                // los datos del cliente y la información del pago.
+                RifaNumero::where('rifa_id', $datos['id_rifa'])
+                    ->where('id_vendedor', $datos['vendedor_origen_id'])
+                    ->whereIn('id', $datos['numeros'])
+                    ->update([
+                        'id_vendedor' => $datos['vendedor_destino_id']
+                    ]);
+
+                Log::info('Transferencia manual de números de rifa', [
+                    'rifa_id' => $datos['id_rifa'],
+                    'vendedor_origen_id' => $datos['vendedor_origen_id'],
+                    'vendedor_destino_id' => $datos['vendedor_destino_id'],
+                    'numeros_ids' => $datos['numeros'],
+                    'usuario_administrador_id' => auth()->id(),
+                ]);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Los números fueron transferidos correctamente.'
+            ]);
+
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+
+        } catch (\Throwable $e) {
+            Log::error('Error al transferir números de rifa', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrió un error al transferir los números.'
+            ], 500);
+        }
+    }
+
+
+    // public function datosConfirmacionWhatsApp($id)
+    // {
+    //     $numero = RifaNumero::findOrFail($id);
+
+    //     abort_unless(
+    //         (int) $numero->id_vendedor === (int) auth()->id(),
+    //         403,
+    //         'No tienes permiso para consultar este número.'
+    //     );
+
+    //     if ($numero->estado !== 'pagado') {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Este número todavía no está pagado.'
+    //         ], 422);
+    //     }
+
+    //     if (empty($numero->whatsapp)) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'El cliente no tiene un WhatsApp registrado.'
+    //         ], 422);
+    //     }
+
+    //     $numeros = RifaNumero::where('rifa_id', $numero->rifa_id)
+    //         ->where('whatsapp', $numero->whatsapp)
+    //         ->where('estado', 'pagado')
+    //         ->orderBy('numero')
+    //         ->pluck('numero')
+    //         ->map(fn ($n) => str_pad((string) $n, 2, '0', STR_PAD_LEFT))
+    //         ->values();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'nombre' => $numero->nombre,
+    //         'whatsapp' => $numero->whatsapp,
+    //         'numeros' => $numeros
+    //     ]);
+    // }
+public function datosConfirmacionWhatsApp($id)
+{
+    $numero = RifaNumero::findOrFail($id);
+
+    abort_unless(
+        (int) $numero->id_vendedor === (int) auth()->id(),
+        403,
+        'No tienes permiso para consultar este número.'
+    );
+
+    if (!in_array($numero->estado, ['pagado', 'reservado'])) {
+        return response()->json([
+            'success' => false,
+            'message' => 'El número debe estar reservado o pagado.'
+        ], 422);
+    }
+
+    if (empty($numero->whatsapp)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'El cliente no tiene un WhatsApp registrado.'
+        ], 422);
+    }
+
+    // Consultar los números del cliente en la misma rifa,
+    // con el mismo vendedor y el mismo estado.
+    $numerosCliente = RifaNumero::where('rifa_id', $numero->rifa_id)
+        ->where('id_vendedor', $numero->id_vendedor)
+        ->where('whatsapp', $numero->whatsapp)
+        ->where('estado', $numero->estado)
+        ->orderBy('numero')
+        ->get();
+
+    // Obtener la información de la rifa.
+    $rifa = Rifa::findOrFail($numero->rifa_id);
+
+    $valorNumero = (float) $rifa->valor_opcion;
+    $cantidad = $numerosCliente->count();
+    $total = $cantidad * $valorNumero;
+
+    // Datos de pago del vendedor.
+    $vendedor = User::find($numero->id_vendedor);
+
+    $numeros = $numerosCliente->pluck('numero')
+        ->map(fn ($n) => str_pad((string) $n, 2, '0', STR_PAD_LEFT))
+        ->values();
+
+    return response()->json([
+        'success' => true,
+        'estado' => $numero->estado,
+        'nombre' => $numero->nombre,
+        'whatsapp' => $numero->whatsapp,
+        'numeros' => $numeros,
+        'valor_numero' => $valorNumero,
+        'cantidad' => $cantidad,
+        'total' => $total,
+        'tipo_pago' => $vendedor->tipo_pago ?? null,
+        'numero_pago' => $vendedor->numero_pago ?? null,
+    ]);
+}
+
 }

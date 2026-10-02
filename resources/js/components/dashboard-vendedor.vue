@@ -165,12 +165,12 @@
                                     :key="numero.id"
                                     class="numero-wrapper"
                                 >
-
-                                    <div
-                                        class="numero-bolita"
-                                        :class="claseEstado(numero.estado)"
-                                        :title="'Estado: ' + numero.estado"
-                                        @click="abrirEstados(numero)"
+                                
+                                <div
+                                    class="numero-bolita"
+                                    :class="claseEstado(numero.estado)"
+                                    :title="'Estado: ' + numero.estado"
+                                    @click="abrirEstados(numero)"
                                     >
                                         {{ String(numero.numero).padStart(2, '0') }}
                                     </div>
@@ -215,12 +215,15 @@
                             <div class="card-title">
                                 Ventas
                             </div>
-                               <div  v-for="(num_vendido, i) in rifa.numeros" :key="i">
+                            <div  v-for="(num_vendido, i) in rifa.numeros" :key="i">
                                 <div class="py-31" v-if="num_vendido.estado != 'disponible'">
                                     <span class="badge me-2" :class="num_vendido.estado === 'reservado'?'bg-warning':'bg-danger'" v-if="num_vendido.estado != 'disponible'">
                                         {{ num_vendido.numero }} 
                                     </span>
-                                    {{ num_vendido.nombre }}
+                                    <span class="btn " @click="generarWhatsApp(num_vendido)">
+                                        <i class="fa-brands fa-whatsapp"></i>
+                                        {{ num_vendido.nombre }}
+                                    </span>
                                 
                                 </div>
                                </div> 
@@ -303,90 +306,229 @@ export default {
     },
 
     methods: {
-abrirEstados(numero) {
 
-    if (this.actualizandoEstado) {
-        return;
-    }
+        // generarWhatsApp(numero) {
+        //     if (numero.estado !== 'pagado') {
+        //         return;
+        //     }
 
-    if (
-        this.numeroEditando &&
-        this.numeroEditando.id === numero.id
-    ) {
+        //     axios.get(
+        //         this.path +
+        //         '/rifas-vendedor/numero/' +
+        //         numero.id +
+        //         '/confirmacion-whatsapp'
+        //     )
+        //     .then(response => {
+        //         const cliente = response.data;
 
-        this.numeroEditando = null;
+        //         if (!cliente.success) {
+        //             alert(cliente.message || 'No se pudo consultar el cliente.');
+        //             return;
+        //         }
 
-    } else {
+        //         let telefono = String(cliente.whatsapp).replace(/\D/g, '');
 
-        this.numeroEditando = numero;
+        //         // Colombia: agregar el indicativo si solo tiene 10 dígitos.
+        //         if (telefono.length === 10) {
+        //             telefono = '57' + telefono;
+        //         }
 
-    }
+        //         if (!telefono.startsWith('57') || telefono.length !== 12) {
+        //             alert('Verifica el número de WhatsApp del cliente.');
+        //             return;
+        //         }
 
-},
+        //         const listaNumeros = cliente.numeros.join(', ');
+        //         //pagados
+        //         const mensaje =
+        //             `¡Hola, ${cliente.nombre}! 🎉🎟️\n\n` +
+        //             `Te confirmamos que tus números ${listaNumeros} ` +
+        //             `ya están pagados y registrados correctamente.\n\n` +
+        //             `✅ ¡Ya estás listo para participar en nuestra rifa!\n\n` +
+        //             `¡Mucha suerte! 🍀 Gracias por participar.`;
 
-cambiarEstado(numero, estado) {
+        //         const enlace =
+        //             'https://wa.me/' + telefono +
+        //             '?text=' + encodeURIComponent(mensaje);
 
-    if (this.actualizandoEstado) {
-        return;
-    }
+        //         window.open(enlace, '_blank');
+        //     })
+        //     .catch(error => {
+        //         console.error(
+        //             'Error consultando números pagados:',
+        //             error.response?.data || error
+        //         );
 
-    // Si ya tiene ese estado no hacemos petición
-    if (numero.estado === estado) {
+        //         alert(
+        //             error.response?.data?.message ||
+        //             'No fue posible generar el enlace de WhatsApp.'
+        //         );
+        //     });
+        // },
 
-        this.numeroEditando = null;
+        generarWhatsApp(numero) {
+            if (!['reservado', 'pagado'].includes(numero.estado)) {
+                return;
+            }
 
-        return;
-    }
+            const endpoint = numero.estado === 'pagado'
+                ? '/confirmacion-whatsapp'
+                : '/cobro-whatsapp';
 
-    this.actualizandoEstado = true;
+            axios.get(
+                this.path +
+                '/rifas-vendedor/numero/' +
+                numero.id +
+                endpoint
+            )
+            .then(response => {
+                const cliente = response.data;
 
-    axios.post(this.path+'/rifas-vendedor/numero/' + numero.id + '/estado',
-    {estado: estado}).then(response => {
-        console.log(
-            'Estado actualizado:',
-            response.data
-        );
+                if (!cliente.success) {
+                    alert(cliente.message || 'No se pudo consultar el cliente.');
+                    return;
+                }
 
-        if (response.data.success) {
+                let telefono = String(cliente.whatsapp || '').replace(/\D/g, '');
 
-            // Actualizamos el objeto local
-            numero.estado = response.data.numero.estado;
+                // Colombia: agregar indicativo si tiene 10 dígitos.
+                if (telefono.length === 10) {
+                    telefono = '57' + telefono;
+                }
 
-            this.numeroEditando = null;
+                if (!telefono.startsWith('57') || telefono.length !== 12) {
+                    alert('Verifica el número de WhatsApp del cliente.');
+                    return;
+                }
 
-        }
+                const listaNumeros = cliente.numeros.join(', ');
+                let mensaje = '';
 
-    })
-    .catch(error => {
+                if (numero.estado === 'reservado') {
+                    const formatoPesos = valor =>
+                        '$' + Number(valor).toLocaleString('es-CO');
 
-        console.error(
-            'Error actualizando estado:',
-            error
-        );
+                    mensaje =
+                        `¡Hola, ${cliente.nombre}! 🎟️\n\n` +
+                        `Tus números reservados para la rifa son: ${listaNumeros}.\n\n` +
+                        `💰 Valor por número: ${formatoPesos(cliente.valor_numero)}\n` +
+                        `🎟️ Cantidad: ${cliente.cantidad}\n` +
+                        `💵 Total pendiente: ${formatoPesos(cliente.total)}\n\n` +
+                        `Para confirmar tu participación, realiza el pago mediante estos datos:\n\n` +
+                        `🏦 Medio de pago: ${cliente.tipo_pago || 'Consultar con el vendedor'}\n` +
+                        `📲 Número o cuenta: ${cliente.numero_pago || 'Consultar con el vendedor'}\n\n` +
+                        `Cuando realices el pago, envía el comprobante por este medio. ¡Gracias por participar! 🍀`;
+                } else {
+                    mensaje =
+                        `¡Hola, ${cliente.nombre}! 🎉🎟️\n\n` +
+                        `Te confirmamos que tus números ${listaNumeros} ` +
+                        `ya están pagados y registrados correctamente.\n\n` +
+                        `✅ ¡Ya estás listo para participar en nuestra rifa!\n\n` +
+                        `¡Mucha suerte! 🍀 Gracias por participar.`;
+                }
 
-        let mensaje =
-            'No fue posible actualizar el estado del número.';
+                const enlace =
+                    'https://wa.me/' + telefono +
+                    '?text=' + encodeURIComponent(mensaje);
 
-        if (
-            error.response &&
-            error.response.data &&
-            error.response.data.message
-        ) {
+                window.open(enlace, '_blank');
+            })
+            .catch(error => {
+                console.error(
+                    'Error generando mensaje de WhatsApp:',
+                    error.response?.data || error
+                );
 
-            mensaje = error.response.data.message;
+                alert(
+                    error.response?.data?.message ||
+                    'No fue posible generar el enlace de WhatsApp.'
+                );
+            });
+        },
+        abrirEstados(numero) {
 
-        }
+            if (this.actualizandoEstado) {
+                return;
+            }
 
-        alert(mensaje);
+            if (
+                this.numeroEditando &&
+                this.numeroEditando.id === numero.id
+            ) {
 
-    })
-    .finally(() => {
+                this.numeroEditando = null;
 
-        this.actualizandoEstado = false;
+            } else {
 
-    });
+                this.numeroEditando = numero;
 
-},
+            }
+
+        },
+
+        cambiarEstado(numero, estado) {
+
+            if (this.actualizandoEstado) {
+                return;
+            }
+
+            // Si ya tiene ese estado no hacemos petición
+            if (numero.estado === estado) {
+
+                this.numeroEditando = null;
+
+                return;
+            }
+
+            this.actualizandoEstado = true;
+
+            axios.post(this.path+'/rifas-vendedor/numero/' + numero.id + '/estado',
+            {estado: estado}).then(response => {
+                console.log(
+                    'Estado actualizado:',
+                    response.data
+                );
+
+                if (response.data.success) {
+
+                    // Actualizamos el objeto local
+                    numero.estado = response.data.numero.estado;
+
+                    this.numeroEditando = null;
+
+                }
+
+            })
+            .catch(error => {
+
+                console.error(
+                    'Error actualizando estado:',
+                    error
+                );
+
+                let mensaje =
+                    'No fue posible actualizar el estado del número.';
+
+                if (
+                    error.response &&
+                    error.response.data &&
+                    error.response.data.message
+                ) {
+
+                    mensaje = error.response.data.message;
+
+                }
+
+                alert(mensaje);
+
+            })
+            .finally(() => {
+
+                this.actualizandoEstado = false;
+
+            });
+
+        },
 
         cargarRifas() {
             this.cargando = true;
@@ -447,7 +589,6 @@ cambiarEstado(numero, estado) {
 
         },
 
-
         contarEstado(numeros, estado) {
 
             return numeros.filter(
@@ -455,7 +596,6 @@ cambiarEstado(numero, estado) {
             ).length;
 
         },
-
 
         claseEstado(estado) {
 
