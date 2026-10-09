@@ -73,6 +73,15 @@ Route::get(
     [RifaController::class, 'datosConfirmacionWhatsApp']
 );
 
+Route::put(
+    '/rifas/{id}',
+    [RifaController::class, 'actualizarRifa']
+);
+
+Route::delete('/rifas/{id}', [RifaController::class, 'eliminarRifa']);
+
+Route::get('/rifas/{id}/estadisticas', [RifaController::class, 'estadisticas']);
+
 
 
 

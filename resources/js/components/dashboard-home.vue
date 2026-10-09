@@ -7,14 +7,14 @@
                         <div class="card">
 
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h4 class="mb-0">Mis Rifas </h4>
+                                <h4 class="mb-0">Eventos </h4>
                                 <button
                                     type="button"
                                     class="btn btn-primary"
                                     @click="showMenu=2"
                                 >
                                     <i class="fa fa-plus"></i>
-                                    Nueva Rifa
+                                    Nuevo evento
                                 </button>          
                             </div>
 
@@ -56,9 +56,30 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button type="button" class="btn btn-sm btn-primary" @click="seleccionarRifa(rifa)" >
-                                                        <i class="fa fa-eye"></i> Ver
-                                                    </button>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-sm btn-primary fs-6 px-2 py-1" @click="seleccionarRifa(rifa)" >
+                                                            <i class="fa fa-eye"></i> 
+                                                            <!-- //ver -->
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-sm btn-warning  fs-6 px-2 py-1"
+                                                            @click="editarRifa(rifa)"
+                                                        >
+                                                            <i class="fa fa-edit"></i>
+                                                            <!-- Editar -->
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-sm btn-danger  fs-6 px-2 py-1"
+                                                            @click="eliminarRifa(rifa)"
+                                                        >
+                                                            <i class="fa fa-trash"></i>
+                                                            <!-- Eliminar -->
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                             <tr v-if="rifas.length === 0">
@@ -75,12 +96,11 @@
                 </div>               
             </div>
 
-
             <div :class="showMenu == '2'? 'px-0 py-0 mb-5':'d-none' ">
                 <div class="card">
                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h4 class="mb-0">
-                            CREANDO NUEVA RIFA
+                            {{ rifaEditando ? 'MODIFICAR EVENTO' : 'CREANDO NUEVO EVENTO' }}
                         </h4>
 
                         <button
@@ -101,12 +121,12 @@
                                     <!-- Nombre -->
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label>Nombre de la rifa</label>
+                                            <label>Nombre deL evento</label>
                                             <input
                                                 type="text"
                                                 class="form-control"
                                                 v-model="form.nombre"
-                                                placeholder="Ej: Gran Rifa 2026"
+                                                placeholder="Ej: Gran evento 2026"
                                                 required
                                             >
                                         </div>
@@ -138,7 +158,7 @@
                                                 class="form-control"
                                                 rows="3"
                                                 v-model="form.descripcion"
-                                                placeholder="Descripción de la rifa..."
+                                                placeholder="Descripción del evento..."
                                             ></textarea>
                                         </div>
                                     </div>
@@ -181,7 +201,7 @@
                                     <!-- Fecha sorteo -->
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label>Fecha del sorteo</label>
+                                            <label>Fecha del evento</label>
     
                                             <input
                                                 type="date"
@@ -208,14 +228,27 @@
                                     <div class="col-md-4">
                                         <label for="">&nbsp;</label>
                                         <div class="form-group">
-                                            <button type="submit" class="btn btn-primary px-3 mx-2 fs-5 " :disabled="guardando">
+                                            <button
+                                                type="submit"
+                                                class="btn btn-primary px-3 mx-2 fs-5"
+                                                :disabled="guardando"
+                                            >
+                                                <span v-if="guardando">
+                                                    Guardando...
+                                                </span>
+
+                                                <span v-else>
+                                                    {{ rifaEditando ? 'Actualizar' : 'Guardar' }}
+                                                </span>
+                                            </button>
+                                            <!-- <button type="submit" class="btn btn-primary px-3 mx-2 fs-5 d-none" :disabled="guardando">
                                                 <span v-if="guardando">
                                                     Guardando...
                                                 </span>
                                                 <span v-else>
                                                     Guardar
                                                 </span>
-                                            </button>
+                                            </button> -->
 
                                             <button  type="button" class="btn btn-danger mr-2 p-2 mx-2 fs-5" @click="limpiarFormulario">
                                                 Limpiar
@@ -233,7 +266,7 @@
                                                 v-model="form.terminos_condiciones"
                                                 class="form-control"
                                                 rows="10"
-                                                placeholder="Ingrese los términos y condiciones de la rifa..."
+                                                placeholder="Ingrese los términos y condiciones del evento..."
                                             ></textarea>
                                         </div>
                                     </div>
@@ -253,7 +286,7 @@
                 <div class="card">
                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h4 class="mb-0">
-                            Ver la rifa
+                            EVENTO
                         </h4>
 
                         <button
@@ -372,6 +405,140 @@
                                 </div>
                             </div>
                     </div>
+<!-- estadisticas -->
+
+<!-- PANEL DE ESTADÍSTICAS -->
+<div class="card m-3" v-if="estadisticasRifa">
+
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fa fa-chart-bar"></i>
+            Estado general de la rifa
+        </h5>
+
+        <button
+            type="button"
+            class="btn btn-sm btn-outline-primary"
+            @click="cargarEstadisticas"
+            :disabled="cargandoEstadisticas"
+        >
+            <i class="fa fa-sync-alt"></i>
+            Actualizar
+        </button>
+    </div>
+
+    <div class="card-body">
+
+        <div v-if="cargandoEstadisticas" class="text-center p-3">
+            Cargando estadísticas...
+        </div>
+
+        <template v-else>
+
+            <div class="row">
+
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="card bg-light text-center p-3">
+                        <small>Total números</small>
+                        <h3>{{ estadisticasRifa.general.total_numeros }}</h3>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="card bg-success text-white text-center p-3">
+                        <small>Pagados</small>
+                        <h3>{{ estadisticasRifa.general.pagados }}</h3>
+                        <small>
+                            {{ estadisticasRifa.general.porcentaje_pagados }}%
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="card bg-warning text-dark text-center p-3">
+                        <small>Reservados</small>
+                        <h3>{{ estadisticasRifa.general.reservados }}</h3>
+                        <small>
+                            {{ estadisticasRifa.general.porcentaje_reservados }}%
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="card bg-primary text-white text-center p-3">
+                        <small>Disponibles</small>
+                        <h3>{{ estadisticasRifa.general.disponibles }}</h3>
+                        <small>
+                            {{ estadisticasRifa.general.porcentaje_disponibles }}%
+                        </small>
+                    </div>
+                </div>
+
+            </div>
+
+            <h6>Ocupación de la rifa</h6>
+
+            <div class="progress mb-2" style="height: 25px;">
+                <div
+                    class="progress-bar bg-success"
+                    role="progressbar"
+                    :style="{width: estadisticasRifa.general.porcentaje_pagados + '%'}"
+                >
+                    {{ estadisticasRifa.general.porcentaje_pagados }}%
+                </div>
+
+                <div
+                    class="progress-bar bg-warning text-dark"
+                    role="progressbar"
+                    :style="{width: estadisticasRifa.general.porcentaje_reservados + '%'}"
+                >
+                    {{ estadisticasRifa.general.porcentaje_reservados }}%
+                </div>
+            </div>
+
+            <div class="row mt-4">
+
+                <div class="col-md-4 mb-3">
+                    <div class="border rounded p-3">
+                        <small>Recaudo confirmado</small>
+                        <h4>
+                            ${{ Number(
+                                estadisticasRifa.general.recaudo_confirmado
+                            ).toLocaleString('es-CO') }}
+                        </h4>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <div class="border rounded p-3">
+                        <small>Pendiente potencial</small>
+                        <h4>
+                            ${{ Number(
+                                estadisticasRifa.general.pendiente_potencial
+                            ).toLocaleString('es-CO') }}
+                        </h4>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <div class="border rounded p-3">
+                        <small>Valor potencial total</small>
+                        <h4>
+                            ${{ Number(
+                                estadisticasRifa.general.valor_potencial_total
+                            ).toLocaleString('es-CO') }}
+                        </h4>
+                    </div>
+                </div>
+
+            </div>
+
+        </template>
+    </div>
+</div>
+<!-- FIN PANEL DE ESTADÍSTICAS -->
+
+<!-- FIN estadisticas -->
                    
                         
                     <div :class="repartirParticipanes?'card m-3 p-3':'d-none'">
@@ -573,7 +740,6 @@
                 numerosTransferenciaSeleccionados: [],
                 transfiriendoNumeros: false,
 
-
                 imagenesSeleccionadas: [],
                 previsualizaciones: [],
                 subiendoImagenes: false,
@@ -582,6 +748,7 @@
                 status: 'ini',
                 state: {'INI': 'ini', 'LOADING': 'loading', 'LOADED': 'loaded', 'FAILED': 'failed'},
                 guardando: false,
+                rifaEditando: null,
 
                 form: {
                     nombre: '',
@@ -615,11 +782,72 @@
                 vendedoresConNumeros: [],
                 cargandoVendedores: false,
                 repartirParticipanes:false,
+
+                estadisticasRifa: null,
+                cargandoEstadisticas: false,
             
             }
         },
 
         methods:{
+
+            cargarEstadisticas() {
+
+                if (!this.rifaSeleccionada || !this.rifaSeleccionada.id) {
+                    return;
+                }
+
+                this.cargandoEstadisticas = true;
+
+                axios.get(
+                    this.path + '/rifas/' +
+                    this.rifaSeleccionada.id +
+                    '/estadisticas'
+                )
+                .then(response => {
+
+                    if (response.data.success) {
+                        this.estadisticasRifa = response.data;
+                    }
+
+                })
+                .catch(error => {
+
+                    console.error(
+                        'Error cargando estadísticas:',
+                        error.response?.data || error
+                    );
+
+                    Swal.fire(
+                        'Error',
+                        error.response?.data?.message ||
+                            'No fue posible cargar las estadísticas.',
+                        'error'
+                    );
+
+                })
+                .finally(() => {
+                    this.cargandoEstadisticas = false;
+                });
+            },
+
+            editarRifa(rifa) {
+                this.rifaEditando = rifa.id;
+
+                this.form = {
+                    nombre: rifa.nombre || '',
+                    descripcion: rifa.descripcion || '',
+                    premio: rifa.premio || '',
+                    valor_opcion: rifa.valor_opcion || '',
+                    cantidad_numeros: rifa.cantidad_numeros || '',
+                    fecha_sorteo: rifa.fecha_sorteo || '',
+                    validacion_sorteo: rifa.validacion_sorteo || 'pendiente',
+                    terminos_condiciones: rifa.terminos_condiciones || '',
+                    fecha_sorteo : rifa.fecha_sorteo ? rifa.fecha_sorteo.substring(0, 10): '',
+                };
+
+                this.showMenu = 2;
+            },
 
             iniciarTransferencia(vendedor) {
                 this.vendedorOrigenTransferencia = vendedor;
@@ -885,6 +1113,7 @@
                 this.showMenu = 3;
                 this.cargarVendedoresConNumeros();
                 this.cargarImagenes();
+                this.cargarEstadisticas();
                 console.log(arg);
             },
 
@@ -902,34 +1131,142 @@
             this.cargarRifas();
                 this.showMenu = 1; 
             },
-
             guardarRifa() {
+
                 this.guardando = true;
-                axios.post(this.path + '/saveRifa', this.form).then(response => {
-                    console.log(response.data);
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Rifa creada!',
-                        text: 'La rifa fue creada correctamente.',
-                        confirmButtonText: 'Aceptar'
+
+                let peticion;
+
+                if (this.rifaEditando) {
+
+                    // MODIFICAR
+                    peticion = axios.put(
+                        this.path + '/rifas/' + this.rifaEditando,
+                        this.form
+                    );
+
+                } else {
+
+                    // CREAR
+                    peticion = axios.post(
+                        this.path + '/saveRifa',
+                        this.form
+                    );
+                }
+
+                peticion
+                    .then(response => {
+
+                        console.log(response.data);
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: this.rifaEditando
+                                ? '¡Rifa modificada!'
+                                : '¡Rifa creada!',
+                            text: this.rifaEditando
+                                ? 'La rifa fue modificada correctamente.'
+                                : 'La rifa fue creada correctamente.',
+                            confirmButtonText: 'Aceptar'
+                        });
+
+                        this.rifaEditando = null;
+
+                        this.limpiarFormulario();
+
+                    })
+                    .catch(error => {
+
+                        console.error('Error guardar/modificar rifa:', error);
+                        console.error('Respuesta Laravel:', error.response?.data);
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: error.response?.data?.message ||
+                                'No fue posible guardar la rifa.',
+                            confirmButtonText: 'Aceptar'
+                        });
+
+                    })
+                    .finally(() => {
+
+                        this.guardando = false;
+
                     });
-                    this.limpiarFormulario();
-                })
-                .catch(error => {
-                    console.error(error);
+            },
+            eliminarRifa(rifa) {
+
+                Swal.fire({
+                    title: '¿Eliminar esta rifa?',
+                    html: `
+                        <strong>${rifa.nombre}</strong><br><br>
+                        Esta acción eliminará la rifa y sus números.
+                        <br>
+                        <strong>Esta acción no se puede deshacer.</strong>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then(resultado => {
+
+                    if (!resultado.isConfirmed) {
+                        return;
+                    }
+
                     Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: error.response?.data?.message ||
-                            'No fue posible guardar la rifa.',
-                        confirmButtonText: 'Aceptar'
-                    });       
-                })
-                .finally(() => {
-                    this.guardando = false;
+                        title: 'Eliminando...',
+                        text: 'Por favor espere.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    axios.delete(
+                        this.path + '/rifas/' + rifa.id
+                    )
+                    .then(response => {
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Rifa eliminada',
+                            text: response.data.message,
+                            confirmButtonText: 'Aceptar'
+                        });
+
+                        // Si estaba seleccionada, limpiarla
+                        if (
+                            this.rifaSeleccionada &&
+                            Number(this.rifaSeleccionada.id) === Number(rifa.id)
+                        ) {
+                            this.rifaSeleccionada = {};
+                        }
+
+                        this.cargarRifas();
+
+                    })
+                    .catch(error => {
+
+                        console.error('Error eliminando rifa:', error);
+                        console.error('Respuesta Laravel:', error.response?.data);
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'No se pudo eliminar',
+                            text:
+                                error.response?.data?.message ||
+                                'No fue posible eliminar la rifa.',
+                            confirmButtonText: 'Aceptar'
+                        });
+
+                    });
+
                 });
             },
-
             cargarRifas() {
                 this.cargandoRifas = true;
                 axios.post(this.path + '/mis-rifas').then(response => {

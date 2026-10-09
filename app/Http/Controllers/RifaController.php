@@ -70,6 +70,136 @@ class RifaController extends Controller
         ]);
     }
 
+public function estadisticas($id)
+{
+    try {
+        $rifa = Rifa::findOrFail($id);
+
+        $numeros = RifaNumero::with('vendedor')
+            ->where('rifa_id', $rifa->id)
+            ->get();
+
+        $total = $numeros->count();
+
+        // ESTADÍSTICAS GENERALES
+        $pagados = $numeros->where('estado', 'pagado')->count();
+
+        $reservados = $numeros->where('estado', 'reservado')->count();
+
+        $disponibles = $numeros->where('estado', 'disponible')->count();
+
+        $porcentaje = function ($cantidad, $base) {
+            return $base > 0
+                ? round(($cantidad / $base) * 100, 2)
+                : 0;
+        };
+
+        $valorNumero = (float) $rifa->valor_opcion;
+
+        $general = [
+            'total_numeros' => $total,
+            'pagados' => $pagados,
+            'reservados' => $reservados,
+            'disponibles' => $disponibles,
+
+            'porcentaje_pagados' => $porcentaje($pagados, $total),
+            'porcentaje_reservados' => $porcentaje($reservados, $total),
+            'porcentaje_disponibles' => $porcentaje($disponibles, $total),
+
+            'porcentaje_ocupacion' => $porcentaje(
+                $pagados + $reservados,
+                $total
+            ),
+
+            'recaudo_confirmado' => $pagados * $valorNumero,
+
+            'pendiente_potencial' => $reservados * $valorNumero,
+
+            'valor_potencial_total' => $total * $valorNumero,
+        ];
+
+        // ESTADÍSTICAS POR VENDEDOR
+        $vendedores = $numeros
+            ->filter(function ($numero) {
+                return !is_null($numero->id_vendedor);
+            })
+            ->groupBy('id_vendedor')
+            ->map(function ($grupo) use ($valorNumero, $porcentaje) {
+
+                $vendedor = $grupo->first()->vendedor;
+                $totalAsignados = $grupo->count();
+
+                $pagados = $grupo
+                    ->where('estado', 'pagado')
+                    ->count();
+
+                $reservados = $grupo
+                    ->where('estado', 'reservado')
+                    ->count();
+
+                $disponibles = $grupo
+                    ->where('estado', 'disponible')
+                    ->count();
+
+                return [
+                    'id' => $vendedor->id,
+                    'nombre' => trim(
+                        ($vendedor->firts_name ?? '') . ' ' .
+                        ($vendedor->last_name ?? '')
+                    ),
+                    'total_asignados' => $totalAsignados,
+
+                    'pagados' => $pagados,
+                    'reservados' => $reservados,
+                    'disponibles' => $disponibles,
+
+                    'porcentaje_pagados' => $porcentaje(
+                        $pagados,
+                        $totalAsignados
+                    ),
+
+                    'porcentaje_reservados' => $porcentaje(
+                        $reservados,
+                        $totalAsignados
+                    ),
+
+                    'porcentaje_disponibles' => $porcentaje(
+                        $disponibles,
+                        $totalAsignados
+                    ),
+
+                    'porcentaje_ocupacion' => $porcentaje(
+                        $pagados + $reservados,
+                        $totalAsignados
+                    ),
+
+                    'recaudo_confirmado' => $pagados * $valorNumero,
+
+                    'pendiente_potencial' => $reservados * $valorNumero,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'rifa' => [
+                'id' => $rifa->id,
+                'nombre' => $rifa->nombre,
+                'valor_numero' => $valorNumero,
+            ],
+            'general' => $general,
+            'vendedores' => $vendedores,
+        ]);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No fue posible consultar las estadísticas.',
+        ], 500);
+    }
+}
+
     /**
      * Mostrar información de un número.
      */
@@ -418,6 +548,105 @@ class RifaController extends Controller
                 'success' => false,
                 'message' => 'No fue posible crear la rifa.',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function actualizarRifa(Request $request, $id)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'premio' => 'required|string|max:255',
+            'valor_opcion' => 'required|numeric|min:0',
+            'fecha_sorteo' => 'required|date',
+            'validacion_sorteo' => 'required|string|max:255',
+            'terminos_condiciones' => 'nullable|string',
+        ]);
+
+        try {
+
+            $rifa = Rifa::findOrFail($id);
+
+            $rifa->nombre = $request->nombre;
+            $rifa->descripcion = $request->descripcion;
+            $rifa->premio = $request->premio;
+            $rifa->valor_opcion = $request->valor_opcion;
+            $rifa->fecha_sorteo = $request->fecha_sorteo;
+            $rifa->validacion_sorteo = $request->validacion_sorteo;
+            $rifa->terminos_condiciones = $request->terminos_condiciones;
+
+            $rifa->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'La rifa fue actualizada correctamente.',
+                'rifa' => $rifa
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No fue posible actualizar la rifa.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function eliminarRifa($id)
+    {
+        try {
+
+            DB::beginTransaction();
+
+            $rifa = Rifa::findOrFail($id);
+
+            // Verificar si existen números reservados o pagados
+            $numerosNoDisponibles = RifaNumero::where('rifa_id', $rifa->id)
+                ->whereIn('estado', ['reservado', 'pagado'])
+                ->count();
+
+            if ($numerosNoDisponibles > 0) {
+
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede eliminar la rifa porque tiene números reservados o pagados.'
+                ], 422);
+            }
+
+            // Eliminar imágenes físicas
+            foreach ($rifa->imagenes as $imagen) {
+
+                if (Storage::disk('public')->exists($imagen->imagen)) {
+                    Storage::disk('public')->delete($imagen->imagen);
+                }
+            }
+
+            // Eliminar registros de imágenes
+            $rifa->imagenes()->delete();
+
+            // Eliminar números
+            RifaNumero::where('rifa_id', $rifa->id)->delete();
+
+            // Finalmente eliminar la rifa
+            $rifa->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'La rifa fue eliminada correctamente.'
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -878,65 +1107,65 @@ class RifaController extends Controller
     //         'numeros' => $numeros
     //     ]);
     // }
-public function datosConfirmacionWhatsApp($id)
-{
-    $numero = RifaNumero::findOrFail($id);
+    public function datosConfirmacionWhatsApp($id)
+    {
+        $numero = RifaNumero::findOrFail($id);
 
-    abort_unless(
-        (int) $numero->id_vendedor === (int) auth()->id(),
-        403,
-        'No tienes permiso para consultar este número.'
-    );
+        abort_unless(
+            (int) $numero->id_vendedor === (int) auth()->id(),
+            403,
+            'No tienes permiso para consultar este número.'
+        );
 
-    if (!in_array($numero->estado, ['pagado', 'reservado'])) {
+        if (!in_array($numero->estado, ['pagado', 'reservado'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El número debe estar reservado o pagado.'
+            ], 422);
+        }
+
+        if (empty($numero->whatsapp)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El cliente no tiene un WhatsApp registrado.'
+            ], 422);
+        }
+
+        // Consultar los números del cliente en la misma rifa,
+        // con el mismo vendedor y el mismo estado.
+        $numerosCliente = RifaNumero::where('rifa_id', $numero->rifa_id)
+            ->where('id_vendedor', $numero->id_vendedor)
+            ->where('whatsapp', $numero->whatsapp)
+            ->where('estado', $numero->estado)
+            ->orderBy('numero')
+            ->get();
+
+        // Obtener la información de la rifa.
+        $rifa = Rifa::findOrFail($numero->rifa_id);
+
+        $valorNumero = (float) $rifa->valor_opcion;
+        $cantidad = $numerosCliente->count();
+        $total = $cantidad * $valorNumero;
+
+        // Datos de pago del vendedor.
+        $vendedor = User::find($numero->id_vendedor);
+
+        $numeros = $numerosCliente->pluck('numero')
+            ->map(fn ($n) => str_pad((string) $n, 2, '0', STR_PAD_LEFT))
+            ->values();
+
         return response()->json([
-            'success' => false,
-            'message' => 'El número debe estar reservado o pagado.'
-        ], 422);
+            'success' => true,
+            'estado' => $numero->estado,
+            'nombre' => $numero->nombre,
+            'whatsapp' => $numero->whatsapp,
+            'numeros' => $numeros,
+            'valor_numero' => $valorNumero,
+            'cantidad' => $cantidad,
+            'total' => $total,
+            'tipo_pago' => $vendedor->tipo_pago ?? null,
+            'numero_pago' => $vendedor->numero_pago ?? null,
+        ]);
     }
-
-    if (empty($numero->whatsapp)) {
-        return response()->json([
-            'success' => false,
-            'message' => 'El cliente no tiene un WhatsApp registrado.'
-        ], 422);
-    }
-
-    // Consultar los números del cliente en la misma rifa,
-    // con el mismo vendedor y el mismo estado.
-    $numerosCliente = RifaNumero::where('rifa_id', $numero->rifa_id)
-        ->where('id_vendedor', $numero->id_vendedor)
-        ->where('whatsapp', $numero->whatsapp)
-        ->where('estado', $numero->estado)
-        ->orderBy('numero')
-        ->get();
-
-    // Obtener la información de la rifa.
-    $rifa = Rifa::findOrFail($numero->rifa_id);
-
-    $valorNumero = (float) $rifa->valor_opcion;
-    $cantidad = $numerosCliente->count();
-    $total = $cantidad * $valorNumero;
-
-    // Datos de pago del vendedor.
-    $vendedor = User::find($numero->id_vendedor);
-
-    $numeros = $numerosCliente->pluck('numero')
-        ->map(fn ($n) => str_pad((string) $n, 2, '0', STR_PAD_LEFT))
-        ->values();
-
-    return response()->json([
-        'success' => true,
-        'estado' => $numero->estado,
-        'nombre' => $numero->nombre,
-        'whatsapp' => $numero->whatsapp,
-        'numeros' => $numeros,
-        'valor_numero' => $valorNumero,
-        'cantidad' => $cantidad,
-        'total' => $total,
-        'tipo_pago' => $vendedor->tipo_pago ?? null,
-        'numero_pago' => $vendedor->numero_pago ?? null,
-    ]);
-}
 
 }
