@@ -307,11 +307,20 @@
                                 {{ rifaSeleccionada.token }}
                             </small>
                             <br>
-                            <span class="!repartirParticipanes?'m-3':'d-none'" @click="repartirParticipanes = !repartirParticipanes">
-                                Modificar 
-                            </span>
-                            <hr>
-                            <div>
+                            <button :class="!repartirParticipanes?'btn btn-primary':'btn btn-danger'" @click="repartirParticipanes = !repartirParticipanes">
+                                <span v-if="!repartirParticipanes"> Repartir / vendedores</span>
+                                <span v-else>Cerrar reparticiones</span>
+                            </button>
+                            <button :class="viewEstadisticas ?'btn btn-danger':'btn btn-primary'" class="ms-2" @click="viewEstadisticas = !viewEstadisticas">
+                                <span v-if="!viewEstadisticas"> Estadisticas</span>
+                                <span v-else>Cerrar Estadisticas</span>
+                            </button>
+                            <button :class="loadImagenes ?'btn btn-danger':'btn btn-primary'" class="ms-2" @click="loadImagenes = !loadImagenes">
+                                <span v-if="!loadImagenes"> Cargar Imagenes</span>
+                                <span v-else>Cerrar imagenes</span>
+                            </button>
+                           
+                            <div :class="loadImagenes ? '':'d-none'">
                                 Cargar imagenes
                                 <div class="form-group">
                                     <label>
@@ -405,142 +414,244 @@
                                 </div>
                             </div>
                     </div>
-<!-- estadisticas -->
-
-<!-- PANEL DE ESTADÍSTICAS -->
-<div class="card m-3" v-if="estadisticasRifa">
-
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="fa fa-chart-bar"></i>
-            Estado general de la rifa
-        </h5>
-
-        <button
-            type="button"
-            class="btn btn-sm btn-outline-primary"
-            @click="cargarEstadisticas"
-            :disabled="cargandoEstadisticas"
-        >
-            <i class="fa fa-sync-alt"></i>
-            Actualizar
-        </button>
-    </div>
-
-    <div class="card-body">
-
-        <div v-if="cargandoEstadisticas" class="text-center p-3">
-            Cargando estadísticas...
-        </div>
-
-        <template v-else>
-
-            <div class="row">
-
-                <div class="col-6 col-md-3 mb-3">
-                    <div class="card bg-light text-center p-3">
-                        <small>Total números</small>
-                        <h3>{{ estadisticasRifa.general.total_numeros }}</h3>
-                    </div>
-                </div>
-
-                <div class="col-6 col-md-3 mb-3">
-                    <div class="card bg-success text-white text-center p-3">
-                        <small>Pagados</small>
-                        <h3>{{ estadisticasRifa.general.pagados }}</h3>
-                        <small>
-                            {{ estadisticasRifa.general.porcentaje_pagados }}%
-                        </small>
-                    </div>
-                </div>
-
-                <div class="col-6 col-md-3 mb-3">
-                    <div class="card bg-warning text-dark text-center p-3">
-                        <small>Reservados</small>
-                        <h3>{{ estadisticasRifa.general.reservados }}</h3>
-                        <small>
-                            {{ estadisticasRifa.general.porcentaje_reservados }}%
-                        </small>
-                    </div>
-                </div>
-
-                <div class="col-6 col-md-3 mb-3">
-                    <div class="card bg-primary text-white text-center p-3">
-                        <small>Disponibles</small>
-                        <h3>{{ estadisticasRifa.general.disponibles }}</h3>
-                        <small>
-                            {{ estadisticasRifa.general.porcentaje_disponibles }}%
-                        </small>
-                    </div>
-                </div>
-
-            </div>
-
-            <h6>Ocupación de la rifa</h6>
-
-            <div class="progress mb-2" style="height: 25px;">
-                <div
-                    class="progress-bar bg-success"
-                    role="progressbar"
-                    :style="{width: estadisticasRifa.general.porcentaje_pagados + '%'}"
-                >
-                    {{ estadisticasRifa.general.porcentaje_pagados }}%
-                </div>
-
-                <div
-                    class="progress-bar bg-warning text-dark"
-                    role="progressbar"
-                    :style="{width: estadisticasRifa.general.porcentaje_reservados + '%'}"
-                >
-                    {{ estadisticasRifa.general.porcentaje_reservados }}%
-                </div>
-            </div>
-
-            <div class="row mt-4">
-
-                <div class="col-md-4 mb-3">
-                    <div class="border rounded p-3">
-                        <small>Recaudo confirmado</small>
-                        <h4>
-                            ${{ Number(
-                                estadisticasRifa.general.recaudo_confirmado
-                            ).toLocaleString('es-CO') }}
-                        </h4>
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <div class="border rounded p-3">
-                        <small>Pendiente potencial</small>
-                        <h4>
-                            ${{ Number(
-                                estadisticasRifa.general.pendiente_potencial
-                            ).toLocaleString('es-CO') }}
-                        </h4>
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <div class="border rounded p-3">
-                        <small>Valor potencial total</small>
-                        <h4>
-                            ${{ Number(
-                                estadisticasRifa.general.valor_potencial_total
-                            ).toLocaleString('es-CO') }}
-                        </h4>
-                    </div>
-                </div>
-
-            </div>
-
-        </template>
-    </div>
-</div>
-<!-- FIN PANEL DE ESTADÍSTICAS -->
-
-<!-- FIN estadisticas -->
-                   
+                    <div v-if="viewEstadisticas">
+                        <!-- PANEL DE ESTADÍSTICAS -->
+                        <div class="card m-3" v-if="estadisticasRifa">
                         
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-chart-bar"></i>
+                                    Estado general de la rifa
+                                </h5>
+                        
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-primary"
+                                    @click="cargarEstadisticas"
+                                    :disabled="cargandoEstadisticas"
+                                >
+                                    <i class="fa fa-sync-alt"></i>
+                                    Actualizar
+                                </button>
+                            </div>
+                        
+                            <div class="card-body">
+                        
+                                <div v-if="cargandoEstadisticas" class="text-center p-3">
+                                    Cargando estadísticas...
+                                </div>
+                        
+                                <template v-else>
+                        
+                                    <div class="row">
+                        
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="card bg-light text-center p-3">
+                                                <small>Total números</small>
+                                                <h3>{{ estadisticasRifa.general.total_numeros }}</h3>
+                                            </div>
+                                        </div>
+                        
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="card bg-success text-white text-center p-3">
+                                                <small>Pagados</small>
+                                                <h3>{{ estadisticasRifa.general.pagados }}</h3>
+                                                <small>
+                                                    {{ estadisticasRifa.general.porcentaje_pagados }}%
+                                                </small>
+                                            </div>
+                                        </div>
+                        
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="card bg-warning text-dark text-center p-3">
+                                                <small>Reservados</small>
+                                                <h3>{{ estadisticasRifa.general.reservados }}</h3>
+                                                <small>
+                                                    {{ estadisticasRifa.general.porcentaje_reservados }}%
+                                                </small>
+                                            </div>
+                                        </div>
+                        
+                                        <div class="col-6 col-md-3 mb-3">
+                                            <div class="card bg-primary text-white text-center p-3">
+                                                <small>Disponibles</small>
+                                                <h3>{{ estadisticasRifa.general.disponibles }}</h3>
+                                                <small>
+                                                    {{ estadisticasRifa.general.porcentaje_disponibles }}%
+                                                </small>
+                                            </div>
+                                        </div>
+                        
+                                    </div>
+                        
+                                    <h6>Ocupación de la rifa</h6>
+                        
+                                    <div class="progress mb-2" style="height: 25px;">
+                                        <div
+                                            class="progress-bar bg-success"
+                                            role="progressbar"
+                                            :style="{width: estadisticasRifa.general.porcentaje_pagados + '%'}"
+                                        >
+                                            {{ estadisticasRifa.general.porcentaje_pagados }}%
+                                        </div>
+                        
+                                        <div
+                                            class="progress-bar bg-warning text-dark"
+                                            role="progressbar"
+                                            :style="{width: estadisticasRifa.general.porcentaje_reservados + '%'}"
+                                        >
+                                            {{ estadisticasRifa.general.porcentaje_reservados }}%
+                                        </div>
+                                    </div>
+                        
+                                    <div class="row mt-4">
+                        
+                                        <div class="col-md-4 mb-3">
+                                            <div class="border rounded p-3">
+                                                <small>Recaudo confirmado</small>
+                                                <h4>
+                                                    ${{ Number(
+                                                        estadisticasRifa.general.recaudo_confirmado
+                                                    ).toLocaleString('es-CO') }}
+                                                </h4>
+                                            </div>
+                                        </div>
+                        
+                                        <div class="col-md-4 mb-3">
+                                            <div class="border rounded p-3">
+                                                <small>Pendiente potencial</small>
+                                                <h4>
+                                                    ${{ Number(
+                                                        estadisticasRifa.general.pendiente_potencial
+                                                    ).toLocaleString('es-CO') }}
+                                                </h4>
+                                            </div>
+                                        </div>
+                        
+                                        <div class="col-md-4 mb-3">
+                                            <div class="border rounded p-3">
+                                                <small>Valor potencial total</small>
+                                                <h4>
+                                                    ${{ Number(
+                                                        estadisticasRifa.general.valor_potencial_total
+                                                    ).toLocaleString('es-CO') }}
+                                                </h4>
+                                            </div>
+                                        </div>
+                        
+                                    </div>
+                        
+                                </template>
+                            </div>
+                        </div>
+                        <!-- FIN PANEL DE ESTADÍSTICAS -->
+                        <!-- Estadísticas por vendedor -->
+                        <div class="card m-3" v-if="estadisticasRifa">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-users me-2"></i>
+                                    Estadísticas por vendedor
+                                </h5>
+                                <span class="badge bg-primary">
+                                    {{ estadisticasRifa.vendedores.length }} vendedores
+                                </span>
+                            </div>
+                        
+                            <div class="card-body">
+                                <div
+                                    v-if="estadisticasRifa.vendedores.length === 0"
+                                    class="alert alert-info mb-0"
+                                >
+                                    No hay vendedores con números asignados en esta rifa.
+                                </div>
+                        
+                                <div v-else class="table-responsive">
+                                    <table class="table table-bordered table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Vendedor</th>
+                                                <th class="text-center">Asignados</th>
+                                                <th class="text-center">Pagados</th>
+                                                <th class="text-center">% pagados</th>
+                                                <th class="text-center">Reservados</th>
+                                                <th class="text-center">Disponibles</th>
+                                                <th class="text-center">% ocupación</th>
+                                                <th class="text-end">Recaudo</th>
+                                                <th class="text-end">Pendiente</th>
+                                            </tr>
+                                        </thead>
+                        
+                                        <tbody>
+                                            <tr
+                                                v-for="vendedor in estadisticasRifa.vendedores"
+                                                :key="vendedor.id"
+                                            >
+                                                <td>
+                                                    <strong>{{ vendedor.nombre }}</strong>
+                                                </td>
+                        
+                                                <td class="text-center">
+                                                    {{ vendedor.total_asignados }}
+                                                </td>
+                        
+                                                <td class="text-center">
+                                                    <span class="badge bg-success">
+                                                        {{ vendedor.pagados }}
+                                                    </span>
+                                                </td>
+                        
+                                                <td class="text-center">
+                                                    {{ vendedor.porcentaje_pagados }}%
+                                                </td>
+                        
+                                                <td class="text-center">
+                                                    <span class="badge bg-warning text-dark">
+                                                        {{ vendedor.reservados }}
+                                                    </span>
+                                                </td>
+                        
+                                                <td class="text-center">
+                                                    <span class="badge bg-info text-dark">
+                                                        {{ vendedor.disponibles }}
+                                                    </span>
+                                                </td>
+                        
+                                                <td style="min-width: 130px;">
+                                                    <div class="progress" style="height: 18px;">
+                                                        <div
+                                                            class="progress-bar bg-success"
+                                                            role="progressbar"
+                                                            :style="{
+                                                                width: vendedor.porcentaje_ocupacion + '%'
+                                                            }"
+                                                            :aria-valuenow="vendedor.porcentaje_ocupacion"
+                                                            aria-valuemin="0"
+                                                            aria-valuemax="100"
+                                                        >
+                                                            {{ vendedor.porcentaje_ocupacion }}%
+                                                        </div>
+                                                    </div>
+                                                </td>
+                        
+                                                <td class="text-end text-success fw-bold">
+                                                    ${{ Number(vendedor.recaudo_confirmado)
+                                                        .toLocaleString('es-CO') }}
+                                                </td>
+                        
+                                                <td class="text-end text-warning fw-bold">
+                                                    ${{ Number(vendedor.pendiente_potencial)
+                                                        .toLocaleString('es-CO') }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- FIN estadisticas -->
+                    </div>
+
                     <div :class="repartirParticipanes?'card m-3 p-3':'d-none'">
                         <div class="d-flex justify-content-between align-items-center">
                              <h5>Seleccione los vendedores</h5>
@@ -785,6 +896,8 @@
 
                 estadisticasRifa: null,
                 cargandoEstadisticas: false,
+                viewEstadisticas:false,
+                loadImagenes:false
             
             }
         },
